@@ -74,8 +74,26 @@ int Locate(Sqlist* list, Elem* e, int (* pcompare)(Elem*, Elem*)){
     }
     return 0;
 }
+
+void Prior(Sqlist* list, Elem* cur_e, Elem* pre_e, int (* pcompare)(Elem*, Elem*)){
+    for (int i = 1; i < list->length; i++) {
+        if (pcompare((list->arr + i*sizeof(Elem)), cur_e)) {
+            pre_e = list->arr + (i-1)*sizeof(Elem);
+        }
+    }
+}
+
+
+void Next(Sqlist* list, Elem* cur_e, Elem* pre_e, int (* pcompare)(Elem*, Elem*)){
+    for (int i = 0; i < list->length-1; i++) {
+        if (pcompare((list->arr + i*sizeof(Elem)), cur_e)) {
+            pre_e = list->arr + (i+1)*sizeof(Elem);
+        }
+    }
+}
+
 // 添加元素
-void add(Sqlist* arr, Elem e){
+void ListInsert(Sqlist* arr,int i, Elem e){
     arr->arr[arr->length] = e;
 } 
 
