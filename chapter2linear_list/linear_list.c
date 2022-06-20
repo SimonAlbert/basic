@@ -7,7 +7,7 @@
 int default_size = 4;
 
 typedef struct {
-    int *a;
+    int a;
 } Elem;
 
 int compare(Elem* a,Elem* b){
@@ -92,14 +92,49 @@ void Next(Sqlist* list, Elem* cur_e, Elem* pre_e, int (* pcompare)(Elem*, Elem*)
     }
 }
 
-// 添加元素
-void ListInsert(Sqlist* arr,int i, Elem e){
-    arr->arr[arr->length] = e;
-} 
+// 设置元素
+void ListSet(Sqlist* list,int i, Elem* e){
+    list->arr[list->length] = *e;
+}
 
+// 添加元素
+void ListInsert(Sqlist* list, Elem* e){
+    if (list->length < list->max_size) {
+        list->arr[list->length] = *e;
+        list->length++;
+    }else{
+        list->arr = realloc(list->arr,list->max_size*2);
+        if (list->arr) {
+            list->arr[list->length] = *e;
+            list->length++;
+            list->max_size*=2;
+        }else{
+            exit(OVERFLOW);
+        }
+    }
+}
+
+// 输出数组
+void ListPrint(Sqlist* list){
+    for (int i = 0; i < list->length; i++) {
+        printf("%d\n", list->arr[i].a);
+    }
+}
 int main(){
     Sqlist list;
     InitList(&list);
-    printf("%d", list.max_size);
+    Elem e;
+    e.a = 1;
+    ListInsert(&list, &e);
+    e.a = 2;
+    ListInsert(&list, &e);
+    e.a = 3;
+    ListInsert(&list, &e);
+    e.a = 4;
+    ListInsert(&list, &e);
+    e.a = 5;
+    ListInsert(&list, &e);
+    ListPrint(&list);
+    printf("%d\n", list.max_size);
     return 0;
 }
