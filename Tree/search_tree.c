@@ -1,5 +1,6 @@
 //
 // Created by Simon on 2023/4/11.
+// search tree implemented by LinkedList
 //
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,7 +76,23 @@ node_ptr find_max(node_ptr t){
     if(!rc(t)) return t;
     return find_max(rc(t));
 }
-//
-void delete(T *v, node_ptr t){
+node_ptr find_val(T* v, node_ptr t){
+    if(!t) return NULL;
 
+    if(*v == t->val){
+        return t;
+    }else if(*v < t->val){
+        return find_val(v, lc(t));
+    }else{// *v > t->val
+        return find_val(v, rc(t));
+    }
+}
+//
+void delete(T* v, node_ptr t){
+    node_ptr p = find_val(v, t);
+    if(!p) return;
+    // 叶子节点
+    if(!lc(p) && !rc(p)){
+
+    }
 }
