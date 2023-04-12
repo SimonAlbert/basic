@@ -24,7 +24,7 @@ int main() {
     int a[200];
     scanf("%d", &n);
     for (int i = 0; i < n; i++) {
-        scanf("%d", &a[i]);
+        scanf("%d", a+i);
     }
     sort(a, n);
     for (int i = 0; i < n; i++) {
