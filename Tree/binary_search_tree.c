@@ -151,22 +151,49 @@ node_ptr delete_val(node_ptr t, T *v) {
 }
 
 // 左右璇 在链表的实现中难以避免发生节点复制
-/*
- * A的右旋动作主要操作三个节点: A, A的左子树B, B的右子树E
- *               [A]
- *             /    \
- *          [B]      [C]
- *         /  \     /   \
- *       [D]  [E] [F]   [G]
- * 右旋发生在
+/* 节点A右旋
+ * 需要操作三个节点: A, A的左子树B, B的右子树E
+ *               R                    R
+ *               |                    |
+ *               A                    B
+ *             /  \                 /  \
+ *            B    C     ===>      D    A
+ *          /  \  /  \                 / \
+ *         D   E F    G               E   C
+ *                                       /  \
+ *                                      F    G
  */
-void rotate_right(node_ptr t){
-
+void rotate_right(node_ptr newB_oldA){
+    // 不修改指针, 修改指针指向的值
+    node_ptr oldB = lc(newB_oldA);
+    node_ptr E = rc(oldB);
+    node_ptr newA = (node_ptr) malloc(sizeof(node));
+    *newA = *newB_oldA;
+    *newB_oldA = *oldB;
+    set_lc(newA, E);
+    set_rc(newB_oldA, newA);
 }
 
-// 左旋
-void rotate_left(){
-
+/* 节点A左旋
+ * 需要操作三个节点: A, A的右子树C, C的左子树F
+ *               R                    R
+ *               |                    |
+ *               A                    C
+ *             /   \                /  \
+ *            B     C     ===>     A    G
+ *          /  \  /  \           /  \
+ *         D   E F    G         B    F
+ *                            /  \
+ *                           D    E
+ */
+void rotate_left(node_ptr newC_oldA){
+    node_ptr oldC = rc(newC_oldA);
+    node_ptr F = lc(oldC);
+    node_ptr newA = (node_ptr) malloc(sizeof(node));
+    *newA = *newC_oldA;
+    *newC_oldA = *oldC;
+    set_rc(newA, F);
+    set_lc(newC_oldA, newA);
 }
 
 void print(node_ptr root){
@@ -185,7 +212,10 @@ int main()
         print(root);
     }
     T d = 3;
-    root = delete_val(root, &d);
+//    root = delete_val(root, &d);
+    rotate_right(root);
+    print(root);
+    rotate_left(rc(rc(root)));
     print(root);
     return 0;
 }
