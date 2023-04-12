@@ -10,9 +10,14 @@ typedef int T;
 typedef struct node {
     T val;
     int count;
+//    int size;
+//    int height;
+    int bf;
     struct node *left;
     struct node *right;
 } *node_ptr, node;
+void rotate_right(node_ptr);
+void rotate_left(node_ptr);
 node_ptr lc(node_ptr t) {
     return t->left;
 }
@@ -22,6 +27,7 @@ node_ptr rc(node_ptr t) {
 
 void set_lc(node_ptr t, node_ptr l){
     t->left = l;
+
 }
 void set_rc(node_ptr t, node_ptr r){
     t->right = r;
@@ -29,6 +35,10 @@ void set_rc(node_ptr t, node_ptr r){
 int end(node_ptr t) {
     return !t;
 }
+
+//void updateSize(node_ptr t){
+//    t->size = lc(t)->size + rc(t)->size;
+//}
 
 void print_node(node_ptr t) {
     printf("{%d}", t->val);
@@ -69,7 +79,7 @@ void linkedlist_format_output(node_ptr t, int deepth){
     linkedlist_format_output(rc(t), deepth+1);
 
     for (int i = 0; i < deepth; ++i) {
-        printf("        ");
+        printf("       ");
     }
     printf("%d\n", t->val);
 
@@ -81,6 +91,8 @@ node_ptr insert(node_ptr t, T *v) {
         node_ptr p = (node_ptr)malloc(sizeof(node));
         p->val = *v;
         p->count = 1;
+//        p->size = 1;
+        p->bf = 0;
         p->left = NULL;
         p->right = NULL;
         return p;
@@ -89,8 +101,17 @@ node_ptr insert(node_ptr t, T *v) {
         t->count++;
     } else if (*v < t->val) {
         set_lc(t, insert(lc(t), v));
+        t->bf --;
     } else if (*v > t->val) {
         set_rc(t, insert(rc(t), v));
+        t->bf ++;
+    }
+    if(t->bf < -1){
+        printf("current node val: %d, node bf: %d\n", t->val, t->bf);
+        rotate_right(t);
+    }else if(t->bf > 1){
+        printf("current node val: %d, node bf: %d\n", t->val, t->bf);
+        rotate_left(t);
     }
     return t;
 }
@@ -131,7 +152,7 @@ node_ptr delete_val(node_ptr t, T *v) {
             node_ptr child = l ? l : r;
             if (l && r) {
                 node_ptr _t = find_max(lc(t));
-                set_rc(_t, t->right);
+                set_rc(_t, rc(t));
                 free(t);
                 return _t;
             } else if (!child) {
@@ -153,15 +174,15 @@ node_ptr delete_val(node_ptr t, T *v) {
 // 左右璇 在链表的实现中难以避免发生节点复制
 /* 节点A右旋
  * 需要操作三个节点: A, A的左子树B, B的右子树E
- *               R                    R
- *               |                    |
- *               A                    B
- *             /  \                 /  \
- *            B    C     ===>      D    A
- *          /  \  /  \                 / \
- *         D   E F    G               E   C
- *                                       /  \
- *                                      F    G
+ *                R                    R
+ *                |                    |
+ *                A                    B
+ *              /  \                  / \
+ *             B    C     ===>       D   A
+ *            / \  / \                  / \
+ *           D  E F   G                E   C
+ *                                       / \
+ *                                      F   G
  */
 void rotate_right(node_ptr newB_oldA){
     // 不修改指针, 修改指针指向的值
@@ -213,9 +234,9 @@ int main()
     }
     T d = 3;
 //    root = delete_val(root, &d);
-    rotate_right(root);
-    print(root);
-    rotate_left(rc(rc(root)));
-    print(root);
+//    rotate_right(root);
+//    print(root);
+//    rotate_left(rc(rc(root)));
+//    print(root);
     return 0;
 }
