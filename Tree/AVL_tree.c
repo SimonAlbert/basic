@@ -86,7 +86,7 @@ void linkedlist_format_output(node_ptr t, int deepth){
     linkedlist_format_output(lc(t), deepth+1);
 }
 // 插入
-node_ptr insert(node_ptr t, T *v) {
+node_ptr insert(node_ptr t, T *v, int* lr_log) {
     if (end(t)) {
         node_ptr p = (node_ptr)malloc(sizeof(node));
         p->val = *v;
@@ -100,18 +100,33 @@ node_ptr insert(node_ptr t, T *v) {
     if (*v == t->val) {
         t->count++;
     } else if (*v < t->val) {
-        set_lc(t, insert(lc(t), v));
+        *lr_log = *lr_log * 2;
         t->bf --;
+        set_lc(t, insert(lc(t), v, lr_log));
     } else if (*v > t->val) {
-        set_rc(t, insert(rc(t), v));
+        *lr_log = *lr_log * 2 + 1;
         t->bf ++;
+        set_rc(t, insert(rc(t), v, lr_log));
     }
+    int flag = 0b11&*lr_log; // 00:LL 01:LR 10:RL 11:RR
     if(t->bf < -1){
-        printf("current node val: %d, node bf: %d\n", t->val, t->bf);
-        rotate_right(t);
+        // 偏左
+        if(flag == 0b00){
+            rotate_right(t);
+        }else if (flag == 0b01){
+            rotate_left(lc(t));
+            rotate_right(t);
+        }
+        t->bf += 2;
     }else if(t->bf > 1){
-        printf("current node val: %d, node bf: %d\n", t->val, t->bf);
-        rotate_left(t);
+        // 偏右
+        if(flag == 0b11){
+            rotate_left(t);
+        }else if (flag == 0b10){
+            rotate_right(rc(t));
+            rotate_left(t);
+        }
+        t->bf -= 2;
     }
     return t;
 }
@@ -181,8 +196,8 @@ node_ptr delete_val(node_ptr t, T *v) {
  *             B    C     ===>       D   A
  *            / \  / \                  / \
  *           D  E F   G                E   C
- *                                       / \
- *                                      F   G
+ *                                        / \
+ *                                       F   G
  */
 void rotate_right(node_ptr newB_oldA){
     // 不修改指针, 修改指针指向的值
@@ -224,15 +239,18 @@ void print(node_ptr root){
 }
 int main()
 {
+    int _i = 0b0101;
+    printf("%d\n", _i);
     node_ptr root = NULL;
     T in = 1;
     while(in != '0'){
         scanf("%d", &in);
         if (!in) { break; }
-        root = insert(root, &in);
+        int lr_log=0b00;
+        root = insert(root, &in, &lr_log);
         print(root);
     }
-    T d = 3;
+//    T d = 3;
 //    root = delete_val(root, &d);
 //    rotate_right(root);
 //    print(root);
