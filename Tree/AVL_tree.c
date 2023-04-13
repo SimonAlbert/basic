@@ -154,9 +154,9 @@ node_ptr find_val(node_ptr t, T *v) {
 
 
 // 使用链表实现
-node_ptr delete_val(node_ptr t, T *v);
+node_ptr delete_val(node_ptr t, T *v, int* lr_log);
 
-node_ptr delete_val(node_ptr t, T *v) {
+node_ptr delete_val(node_ptr t, T *v, int* lr_log) {
     if (end(t)) return NULL;
     if (*v == t->val) {
         if (t->count > 1) {
@@ -179,9 +179,13 @@ node_ptr delete_val(node_ptr t, T *v) {
             }
         }
     } else if (*v < t->val) {
-        set_lc(t, delete_val(lc(t), v));
+        set_lc(t, delete_val(lc(t), v, lr_log));
+        *lr_log = *lr_log * 2 + 1;
+        t->bf ++;
     } else {
-        set_rc(t, delete_val(rc(t), v));
+        set_rc(t, delete_val(rc(t), v, lr_log));
+        *lr_log = *lr_log * 2;
+        t->bf --;
     }
     return t;
 }
@@ -251,7 +255,7 @@ int main()
         print(root);
     }
 //    T d = 3;
-//    root = delete_val(root, &d);
+//    root = delete_val(root, &d, 0);
 //    rotate_right(root);
 //    print(root);
 //    rotate_left(rc(rc(root)));
