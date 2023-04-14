@@ -1,2 +1,2 @@
-# data_structure
-数据结构，基于C
+# data_structure & algorithm
+数据结构和算法，（不一定）基于C
