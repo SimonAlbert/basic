@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 /*
- * B-tree
+ * B-tree 数组实现
  * M B树的阶
  * size 节点关键字数
  * keys 关键字数组
@@ -23,12 +23,32 @@ int maxsize = M-1;
 int minsize = M/2;
 typedef struct TreeNode{
     int size;
-    key_type keys[M-1];
+    key_type keys[M];
     struct TreeNode* children[M];
     int is_leaf;
 } *pTreeNode, TreeNode;
 
 void insert(pTreeNode, key_type*);
+
+void exchange(key_type* a, key_type* b)
+{
+    key_type tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+// 数组插入
+int key_into_node(pTreeNode t, key_type *v)
+{
+    // 节点满
+    if(t->size == M) return -1;
+    key_type tmp = *v;
+    for (int i = 0; i < t->size-1; ++i) {
+        if(t->keys[i] > tmp){
+            exchange(t->keys+i, &tmp);
+        }
+    }
+}
 
 pTreeNode find(pTreeNode t, key_type* v)
 {
