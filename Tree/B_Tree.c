@@ -38,15 +38,21 @@ void exchange(key_type* a, key_type* b)
 }
 
 // 数组插入
-int key_into_node(pTreeNode t, key_type *v)
+int key_into_node(key_type* arr, int num, key_type *v)
 {
     // 节点满
-    if(t->size == M) return -1;
-    key_type tmp = *v;
-    for (int i = 0; i < t->size-1; ++i) {
-        if(t->keys[i] > tmp){
-            exchange(t->keys+i, &tmp);
+    if(num == M) return -1;
+    // 遍历找到目标位置(下标)
+    int position;
+    for (int i = 0; i < num; ++i) {
+        if(arr[i] > *v){
+            position = i;
+            break;
         }
+    }
+    // 从后向前遍历到新元素, 每个后移一位, 减少exchange带来的内存复制
+    for (int i = t->size; i >= position; ++i) {
+
     }
 }
 
@@ -54,7 +60,7 @@ pTreeNode find(pTreeNode t, key_type* v)
 {
     // 空树
 
-    // 搜索
+    // 找到新key的位置
     key_type tmp;
     for (int i = 0; i < t->size; ++i) {
         tmp = t->keys[i];
