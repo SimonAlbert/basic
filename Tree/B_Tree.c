@@ -3,7 +3,6 @@
 //
 #include <stdio.h>
 #include <stdlib.h>
-
 /*
  * B-tree 数组实现
  * M B树的阶
@@ -24,12 +23,21 @@ int maxsize = M - 1;
 int minsize = M / 2;
 typedef struct TreeNode {
     int size;
-    key_type keys[M];
-    struct TreeNode *children[M];
+    key_type* keys;
+    struct TreeNode** children;
     int is_leaf;
 } *pTreeNode, TreeNode;
 
-void insert(pTreeNode, key_type *);
+pTreeNode createNode(int degree){
+    pTreeNode pNode = (pTreeNode) malloc(sizeof(TreeNode));
+    pNode->size = 0;
+    pNode->keys = (key_type*) malloc(sizeof(key_type) * degree);
+    pNode->children = (TreeNode**) malloc(sizeof(TreeNode) * degree);
+    pNode->is_leaf = 1;
+    return pNode;
+}
+
+void insert(pTreeNode, key_type*);
 
 void exchange(key_type *a, key_type *b) {
     key_type tmp = *a;
@@ -50,9 +58,19 @@ int key_into_node(key_type *arr, int num, key_type *v) {
         }
     }
     // 从后向前遍历到新元素, 每个后移一位, 减少exchange带来的内存复制
-    for (int i = t->size; i >= position; ++i) {
-
+    for (int i = num; i >= position; i--) {
+        arr[i] = arr[i-1];
     }
+    arr[position] = *v;
+    return position;
+}
+
+// 分裂节点
+void split(pTreeNode t)
+{
+    // 分裂后不再是叶节点
+    t->is_leaf = 0;
+
 }
 
 pTreeNode find(pTreeNode t, key_type *v) {
