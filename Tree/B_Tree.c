@@ -37,7 +37,6 @@ pTreeNode createNode(int degree){
     return pNode;
 }
 
-void insert(pTreeNode, key_type*);
 
 void exchange(key_type *a, key_type *b) {
     key_type tmp = *a;
@@ -46,7 +45,7 @@ void exchange(key_type *a, key_type *b) {
 }
 
 // 数组插入
-int key_into_node(key_type *arr, int num, key_type *v) {
+int array_insert(key_type *arr, int num, key_type *v) {
     // 节点满
     if (num == M) return -1;
     // 遍历找到目标位置(下标)
@@ -66,7 +65,7 @@ int key_into_node(key_type *arr, int num, key_type *v) {
 }
 
 // 分裂节点
-void split(pTreeNode t)
+void split(pTreeNode t, int index)
 {
     // 分裂后不再是叶节点
     t->is_leaf = 0;
@@ -90,27 +89,25 @@ pTreeNode find(pTreeNode t, key_type *v) {
 }
 
 /* 只能插入叶子节点
- * 叶子节点的几种情况
- * 1. 叶子节点未满
- *     直接数组插入即可
- * 2. 叶子节点已满
- *     2.1 兄弟节点未满
- *         与父节点交换key
+ * 插入成功: 返回null
+ * 插入超限: 返回中间值
  */
 key_type* insert(pTreeNode t, key_type *v) {
+    key_type* ret = NULL;
     // 叶节点
     if (t->is_leaf) {
-        // 节点已满, 插入元素, 返回指向最后一个key的指针, 由父节点将溢出的元素推给兄弟节点
-        // 节点未满, 直接插入, 返回NULL
+        array_insert(t->keys, t->size, v);
+        if(t->size == M- 1){
+            ret = t->keys + t->size / 2;
+        }
+        return ret;
     } else {
-
-        for (int i = 0; i < t->size; ++i) {
+        for (int i = 0; i <= t->size; ++i) {
             // 找到插入的子节点
             if (t->keys[i] < *v && t->keys[i + 1] > *v) {
-                insert(t->children[i], v);
+                return insert(t->children[i], v);
             }
         }
-        insert(t->children[t->size - 1], v);
     }
 }
 
