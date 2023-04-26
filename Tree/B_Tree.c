@@ -44,7 +44,7 @@ void exchange(key_type *a, key_type *b) {
     *b = tmp;
 }
 
-// 数组插入
+// 有序数组中插入
 int array_insert(key_type *arr, int num, key_type *v) {
     // 节点满
     if (num == M) return -1;
@@ -63,13 +63,35 @@ int array_insert(key_type *arr, int num, key_type *v) {
     arr[position] = *v;
     return position;
 }
-
+// 有序数组插入到指定点
+int array_distinct_insert(key_type *arr, int num, key_type *v, int dis_index) {
+    if(num == M){
+        return -1;
+    }
+    for (int i = num; i > dis_index; --i) {
+        arr[i] = arr[i-1];
+    }
+    arr[dis_index] = *v;
+    return 0;
+}
+// 有序数组插入到指定点
+int node_distinct_insert(pTreeNode *arr, int num, pTreeNode *v, int dis_index) {
+    if(num == M){
+        return -1;
+    }
+    for (int i = num; i > dis_index; --i) {
+        arr[i] = arr[i-1];
+    }
+    arr[dis_index] = *v;
+    return 0;
+}
 // 分裂节点
 void split(pTreeNode t, int index)
 {
     // 分裂后不再是叶节点
     t->is_leaf = 0;
-
+    array_distinct_insert(t->keys, t->size, t->keys + index, index);
+    node_distinct_insert(t->children, t->size, t->children + index, index);
 }
 
 pTreeNode find(pTreeNode t, key_type *v) {
