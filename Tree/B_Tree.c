@@ -65,7 +65,7 @@ int array_insert(key_type *arr, int num, key_type *v) {
 }
 // 有序数组插入到指定点
 int array_distinct_insert(key_type *arr, int num, key_type *v, int dis_index) {
-    if(num == M){
+    if(num >= M){
         return -1;
     }
     for (int i = num; i > dis_index; --i) {
@@ -75,23 +75,32 @@ int array_distinct_insert(key_type *arr, int num, key_type *v, int dis_index) {
     return 0;
 }
 // 有序数组插入到指定点
-int node_distinct_insert(pTreeNode *arr, int num, pTreeNode *v, int dis_index) {
-    if(num == M){
+int node_distinct_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
+    if(num >= M){
         return -1;
     }
     for (int i = num; i > dis_index; --i) {
         arr[i] = arr[i-1];
     }
-    arr[dis_index] = *v;
+    arr[dis_index] = v;
     return 0;
 }
-// 分裂节点
+// 分裂节点 一分二
 void split(pTreeNode t, int index)
 {
+    // 第index个子节点满, 取其中间值,
+    key_type pick = t->children[index]->keys[(M + 1) / 2];
     // 分裂后不再是叶节点
     t->is_leaf = 0;
-    array_distinct_insert(t->keys, t->size, t->keys + index, index);
-    node_distinct_insert(t->children, t->size, t->children + index, index);
+    array_distinct_insert(t->keys, t->size, &pick, index);
+
+    // Node
+    pTreeNode child1 = (pTreeNode) malloc(sizeof(TreeNode));
+    // 子节点1
+    node_distinct_insert(t->children, t->size, child1, index);
+    pTreeNode child2 = (pTreeNode) malloc(sizeof(TreeNode));
+    // 子节点2
+    t->children[index + 1] = child2;
 }
 
 pTreeNode find(pTreeNode t, key_type *v) {
@@ -134,5 +143,13 @@ key_type* insert(pTreeNode t, key_type *v) {
 }
 
 int main() {
+    int arr[] = {1 , 2,3,  -1};
 
+    int val = 9;
+
+    printf("%d\n", array_distinct_insert(arr, 3, &val, 2));
+
+    for (int i = 0; i < 4; ++i) {
+        printf("%d,", arr[i]);
+    }
 }
