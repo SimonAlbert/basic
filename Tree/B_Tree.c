@@ -89,17 +89,23 @@ int node_distinct_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
 void split(pTreeNode t, int index)
 {
     t->is_leaf = 0;
-    // 第index个子节点满, 将该节点的中间关键字提取到父节点
+    // 第index个子节点超限, 将该节点的中间关键字提取到父节点
     key_type pick = t->children[index]->keys[(M + 1) / 2]; // 中间关键字
-    array_distinct_insert(t->keys, t->size, &pick, index);
+    array_distinct_insert(t->keys, t->size, &pick, index); // 插入父节点
 
-    // Node
-    pTreeNode child1 = (pTreeNode) malloc(sizeof(TreeNode));
+    // 分裂子节点并建立联系
     // 子节点1
+    pTreeNode child1 = (pTreeNode) malloc(sizeof(TreeNode));
+    // 建立连接
     node_distinct_insert(t->children, t->size, child1, index);
-    pTreeNode child2 = (pTreeNode) malloc(sizeof(TreeNode));
+    // 关键字填充
+    // TODO
     // 子节点2
+    pTreeNode child2 = (pTreeNode) malloc(sizeof(TreeNode));
+    // 建立连接
     t->children[index + 1] = child2;
+    // 关键字填充
+    // TODO
 }
 
 pTreeNode find(pTreeNode t, key_type *v) {
