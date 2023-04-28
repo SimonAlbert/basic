@@ -85,13 +85,12 @@ int node_distinct_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
     arr[dis_index] = v;
     return 0;
 }
-// 分裂节点 一分二
+// 分裂节点 由父节点进行操作 将超限的子节点一分为二
 void split(pTreeNode t, int index)
 {
-    // 第index个子节点满, 取其中间值,
-    key_type pick = t->children[index]->keys[(M + 1) / 2];
-    // 分裂后不再是叶节点
     t->is_leaf = 0;
+    // 第index个子节点满, 将该节点的中间关键字提取到父节点
+    key_type pick = t->children[index]->keys[(M + 1) / 2]; // 中间关键字
     array_distinct_insert(t->keys, t->size, &pick, index);
 
     // Node
