@@ -8,7 +8,7 @@
  * M B树的阶
  * size 节点关键字数
  * keys 关键字数组
- * children 子节点指针数组
+ * children 子节点数组
  *    2-3-4树为例
  *
  *          root
@@ -18,26 +18,28 @@
  *    E  F G   H   I
  */
 typedef int key_type;
-#define M 4 // M=4, 2-3-4 Tree
-int maxsize = M - 1;
-int minsize = M / 2;
+#define M 4 // 阶数(最大子节点数)
+int maxsize = M - 1; // 最大关键字数
+int minsize = M / 2; // 最小关键字数
+// 节点定义
 typedef struct TreeNode {
     int size;
     key_type* keys;
     struct TreeNode** children;
     int is_leaf;
 } *pTreeNode, TreeNode;
-
-pTreeNode createNode(int degree){
+// 创建节点
+pTreeNode createNode(){
     pTreeNode pNode = (pTreeNode) malloc(sizeof(TreeNode));
     pNode->size = 0;
-    pNode->keys = (key_type*) malloc(sizeof(key_type) * degree);
-    pNode->children = (TreeNode**) malloc(sizeof(TreeNode) * degree);
+    pNode->keys = (key_type*) malloc(sizeof(key_type) * M);
+    // 指向子节点的指针数组, 阶数不会很大, 空间浪费小
+    pNode->children = (pTreeNode*) malloc(sizeof(pTreeNode) * M);
     pNode->is_leaf = 1;
     return pNode;
 }
 
-
+// 关键字换值
 void exchange(key_type *a, key_type *b) {
     key_type tmp = *a;
     *a = *b;
@@ -45,26 +47,32 @@ void exchange(key_type *a, key_type *b) {
 }
 
 // 有序数组中插入
-int array_insert(key_type *arr, int num, key_type *v) {
+int key_array_insert(key_type *arr, int size, key_type *v) {
     // 节点满
-    if (num == M) return -1;
+    if (size == M) return -1;
+    if (size == 0)
+    {
+        arr[0] = *v;
+        return 0;
+    }
     // 遍历找到目标位置(下标)
-    int position;
-    for (int i = 0; i < num; ++i) {
+    int position = 0;
+    for (int i = 0; i < size; ++i) {
         if (arr[i] > *v) {
             position = i;
             break;
         }
     }
     // 从后向前遍历到新元素, 每个后移一位, 减少exchange带来的内存复制
-    for (int i = num; i >= position; i--) {
+    for (int i = size; i > position; i--) {
         arr[i] = arr[i-1];
     }
     arr[position] = *v;
     return position;
 }
+
 // 有序数组插入到指定点
-int array_distinct_insert(key_type *arr, int num, key_type *v, int dis_index) {
+int key_directed_insert(key_type *arr, int num, key_type *v, int dis_index) {
     if(num >= M){
         return -1;
     }
@@ -75,7 +83,7 @@ int array_distinct_insert(key_type *arr, int num, key_type *v, int dis_index) {
     return 0;
 }
 // 有序数组插入到指定点
-int node_distinct_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
+int node_directed_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
     if(num >= M){
         return -1;
     }
@@ -89,23 +97,30 @@ int node_distinct_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
 void split(pTreeNode t, int index)
 {
     t->is_leaf = 0;
+    int mid = (M + 1) / 2;// 中值定位
     // 第index个子节点超限, 将该节点的中间关键字提取到父节点
-    key_type pick = t->children[index]->keys[(M + 1) / 2]; // 中间关键字
-    array_distinct_insert(t->keys, t->size, &pick, index); // 插入父节点
-
+    key_type pick = t->children[index]->keys[mid]; // 中间关键字
+    key_directed_insert(t->keys, t->size, &pick, index); // 插入父节点
     // 分裂子节点并建立联系
     // 子节点1
-    pTreeNode child1 = (pTreeNode) malloc(sizeof(TreeNode));
+//    pTreeNode child1 = (pTreeNode) malloc(sizeof(TreeNode));
+    pTreeNode child1 = createNode();
     // 建立连接
-    node_distinct_insert(t->children, t->size, child1, index);
+    node_directed_insert(t->children, t->size, child1, index);
     // 关键字填充
-    // TODO
+    for (int i = 0; i < mid; ++i) {
+        child1->keys[i] = t->keys[i];
+    }
     // 子节点2
-    pTreeNode child2 = (pTreeNode) malloc(sizeof(TreeNode));
+//    pTreeNode child2 = (pTreeNode) malloc(sizeof(TreeNode));
+    pTreeNode child2 = createNode();
     // 建立连接
     t->children[index + 1] = child2;
     // 关键字填充
-    // TODO
+    for (int i = M-1; i > mid; --i) {
+        child2->keys[i] = t->keys[i];
+    }
+    t->size++;
 }
 
 pTreeNode find(pTreeNode t, key_type *v) {
@@ -132,29 +147,43 @@ key_type* insert(pTreeNode t, key_type *v) {
     key_type* ret = NULL;
     // 叶节点
     if (t->is_leaf) {
-        array_insert(t->keys, t->size, v);
-        if(t->size == M- 1){
-            ret = t->keys + t->size / 2;
-        }
-        return ret;
+        key_array_insert(t->keys, t->size, v);
+        t->size++;
     } else {
         for (int i = 0; i <= t->size; ++i) {
             // 找到插入的子节点
             if (t->keys[i] < *v && t->keys[i + 1] > *v) {
-                return insert(t->children[i], v);
+                // 插入 并根据返回值决定是否要进行上溢
+                key_type* child_insert = insert(t->children[i], v);
+                if(child_insert)
+                {
+                    split(t, i);
+                }
             }
         }
     }
+    if(t->size == M- 1){
+        ret = t->keys + t->size / 2;
+    }
+    return ret;
+}
+
+void print_tree(pTreeNode t){
+    for (int i = 0; i <= t->size; ++i) {
+        print_tree(t->children[i]);
+    }
+    for (int i = 0; i < t->size; ++i) {
+        printf("%d,", t->keys[i]);
+    }
+    printf("\n");
 }
 
 int main() {
-    int arr[] = {1 , 2,3,  -1};
-
-    int val = 9;
-
-    printf("%d\n", array_distinct_insert(arr, 3, &val, 2));
-
-    for (int i = 0; i < 4; ++i) {
-        printf("%d,", arr[i]);
-    }
+    int keys[] = { 4, 5, 7, 9};
+    pTreeNode tree = createNode();
+    insert(tree, keys + 0);
+    insert(tree, keys + 1);
+    insert(tree, keys + 2);
+    insert(tree, keys + 3);
+    print_tree(tree);
 }
