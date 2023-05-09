@@ -33,6 +33,9 @@ pTreeNode createNode(){
     pTreeNode pNode = (pTreeNode) malloc(sizeof(TreeNode));
     pNode->size = 0;
     pNode->keys = (key_type*) malloc(sizeof(key_type) * M);
+    for (int i = 0; i < M; ++i) {
+        pNode->keys[i] = 0;
+    }
     // 指向子节点的指针数组, 阶数不会很大, 空间浪费小
     pNode->children = (pTreeNode*) malloc(sizeof(pTreeNode) * M);
     pNode->is_leaf = 1;
@@ -47,9 +50,14 @@ void exchange(key_type *a, key_type *b) {
 }
 
 // 有序数组中插入
-int key_array_insert(key_type *arr, int size, key_type *v) {
+int key_array_insert(key_type *arr, int* psize, key_type *v) {
+
+    *psize++;
+    int size = *psize;
+    //*psize++;
     // 节点满
     if (size == M) return -1;
+    // 节点空
     if (size == 0)
     {
         arr[0] = *v;
@@ -57,11 +65,11 @@ int key_array_insert(key_type *arr, int size, key_type *v) {
     }
     // 遍历找到目标位置(下标)
     int position = 0;
-    for (int i = 0; i < size; ++i) {
-        if (arr[i] > *v) {
-            position = i;
-            break;
-        }
+//    for (int i = 0; i <= size && arr[i] < *v; ++i) {
+//        position = i;
+//    }
+    for (position = 0; position <= size && arr[position] < *v; position++) {
+//        position = i;
     }
     // 从后向前遍历到新元素, 每个后移一位, 减少exchange带来的内存复制
     for (int i = size; i > position; i--) {
@@ -147,7 +155,7 @@ key_type* insert(pTreeNode t, key_type *v) {
     key_type* ret = NULL;
     // 叶节点
     if (t->is_leaf) {
-        key_array_insert(t->keys, t->size, v);
+        key_array_insert(t->keys, &(t->size), v);
         t->size++;
     } else {
         for (int i = 0; i <= t->size; ++i) {
@@ -169,6 +177,12 @@ key_type* insert(pTreeNode t, key_type *v) {
 }
 
 void print_tree(pTreeNode t){
+    if(t->is_leaf){
+        for (int i = 0; i < t->size; ++i) {
+            printf("%d,", t->keys[i]);
+        }
+        return;
+    }
     for (int i = 0; i <= t->size; ++i) {
         print_tree(t->children[i]);
     }
@@ -179,11 +193,12 @@ void print_tree(pTreeNode t){
 }
 
 int main() {
-    int keys[] = { 4, 5, 7, 9};
+    int keys[] = { 4, 7, 9, 5};
     pTreeNode tree = createNode();
     insert(tree, keys + 0);
     insert(tree, keys + 1);
     insert(tree, keys + 2);
     insert(tree, keys + 3);
     print_tree(tree);
+    system("pause");
 }
