@@ -18,9 +18,9 @@
  *    E  F G   H   I
  */
 typedef int value_type;
-#define M 4 // 阶数(最大子节点数)
-int maxsize = M - 1; // 最大关键字数
-int minsize = M / 2; // 最小关键字数
+#define M 3 // 阶数(最大子节点数)
+int MAX_VALUE_COUNT = M - 1; // 最大关键字数
+int MIN_VALUE_COUNT = M / 2; // 最小关键字数
 // 节点定义
 typedef struct TreeNode {
     int size;
@@ -58,7 +58,7 @@ void exchange(value_type *a, value_type *b) {
  */
 int key_array_insert(value_type *arr, const int count, const value_type *v) {
     // 节点满
-    if (count == M) return -1;
+    if (count == MAX_VALUE_COUNT) return -1;
     // 找到目标位置(下标)
     int position = 0;
     while(position < count && *v > arr[position]){
@@ -83,7 +83,7 @@ int key_array_insert(value_type *arr, const int count, const value_type *v) {
  */
 int key_directed_insert(value_type *arr, int num, const value_type *v, int dis_index) {
     // 节点关键字数组已满
-    if(num >= maxsize){
+    if(num >= MAX_VALUE_COUNT){
         return -1;
     }
     for (int i = num; i > dis_index; --i) {
@@ -112,14 +112,34 @@ int node_directed_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
 // 分裂节点 由父节点进行操作 将超限的子节点一分为二
 void split(pTreeNode current_node, int index)
 {
+    // 仅有一个叶节点时, 一分为二, 根节点只保留一个value
+    //if(current_node->is_leaf){
+    //    pTreeNode child1 = createNode();
+    //    pTreeNode child2 = createNode();
+    //    // 关键字填充
+    //    child1->size = MIN_VALUE_COUNT;
+    //    for (int i = 0; i < MIN_VALUE_COUNT; ++i) {
+    //        child1->values[i] = current_node->values[i];
+    //    }
+    //    child2->size = M - MIN_VALUE_COUNT - 1;
+    //    for (int i = MIN_VALUE_COUNT + 1; i < M; ++i) {
+    //        child2->values[i] = current_node->values[i];
+    //    }
+    //    current_node->values[0] = current_node->values[MIN_VALUE_COUNT];
+    //    current_node->size = 1;
+    //    current_node->is_leaf = 0;
+    //    // 建立连接
+    //    current_node->children[0] = child1;
+    //    current_node->children[1] = child2;
+    //    return;
+    //}
     current_node->is_leaf = 0;
-    int mid = (M + 1) / 2;// 中值定位
+    int mid = MIN_VALUE_COUNT + 1;// 中间值下标
     // 第index个子节点超限, 将该节点的中间关键字提取到父节点
     value_type pick = current_node->children[index]->values[mid]; // 中间关键字
     key_directed_insert(current_node->values, current_node->size, &pick, index); // 插入父节点
     // 分裂子节点并建立联系
     // 子节点1
-//    pTreeNode child1 = (pTreeNode) malloc(sizeof(TreeNode));
     pTreeNode child1 = createNode();
     // 建立连接
     node_directed_insert(current_node->children, current_node->size, child1, index);
@@ -128,7 +148,6 @@ void split(pTreeNode current_node, int index)
         child1->values[i] = current_node->values[i];
     }
     // 子节点2
-//    pTreeNode child2 = (pTreeNode) malloc(sizeof(TreeNode));
     pTreeNode child2 = createNode();
     // 建立连接
     current_node->children[index + 1] = child2;
@@ -164,9 +183,7 @@ value_type* insert(pTreeNode current_node, value_type *v) {
     if (current_node->is_leaf) { // 叶节点
         int insert = key_array_insert(current_node->values, current_node->size, v);
         if (insert == -1) { // 超限
-            ret = current_node->values + current_node->size / 2;
-            // 分裂当前节点
-
+            split(current_node, 0);
         }else{
             current_node->size++;
         }
@@ -187,29 +204,30 @@ value_type* insert(pTreeNode current_node, value_type *v) {
     return ret;
 }
 
-void print_tree(pTreeNode t){
+void print_tree(pTreeNode t, int depth){
     if(t->is_leaf){
         for (int i = 0; i < t->size; ++i) {
-            printf("%d,", t->values[i]);
+            printf("%d ", t->values[i]);
         }
         return;
     }
     for (int i = 0; i <= t->size; ++i) {
-        print_tree(t->children[i]);
+        print_tree(t->children[i], depth + 1);
     }
     for (int i = 0; i < t->size; ++i) {
-        printf("%d,", t->values[i]);
+        printf("%d ", t->values[i]);
     }
     printf("\n");
 }
 
 int main() {
-    int values[] = { 4, 7, 9, 5};
+    int values[] = { 4, 7, 9, 5, 11};
     pTreeNode tree = createNode();
     insert(tree, values + 0);
     insert(tree, values + 1);
     insert(tree, values + 2);
     insert(tree, values + 3);
-    print_tree(tree);
+    insert(tree, values + 4);
+    print_tree(tree, 0);
     system("pause");
 }
