@@ -30,6 +30,17 @@ typedef struct TreeNode {
     struct TreeNode* parent;
     int is_leaf;
 } *pTreeNode, TreeNode;
+
+pTreeNode createNode();
+void exchange(value_type *a, value_type *b);
+int key_array_insert(value_type *arr, const int count, const value_type *v);
+int key_directed_insert(value_type *arr, int num, const value_type *v, int dis_index);
+int node_directed_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index);
+void split(pTreeNode current_node, int index);
+pTreeNode find(pTreeNode t, value_type *v);
+int insert(pTreeNode current_node, value_type *v);
+void insert_tree(pTreeNode root, value_type *v);
+
 // 创建节点
 pTreeNode createNode(){
     pTreeNode pNode = (pTreeNode) malloc(sizeof(TreeNode));
@@ -229,22 +240,6 @@ void insert_tree(pTreeNode root, value_type *v) {
     }
 }
 
-void print_tree(pTreeNode t, int depth){
-    if(t->is_leaf){
-        for (int i = 0; i < t->size; ++i) {
-            printf("%d ", t->values[i]);
-        }
-        return;
-    }
-    for (int i = 0; i <= t->size; ++i) {
-        print_tree(t->children[i], depth + 1);
-    }
-    for (int i = 0; i < t->size; ++i) {
-        printf("%d ", t->values[i]);
-    }
-    printf("\n");
-}
-
 int main() {
     int values[] = { 4, 7, 9, 5, 11};
     pTreeNode tree = createNode();
@@ -253,6 +248,5 @@ int main() {
     insert_tree(tree, values + 2);
     insert_tree(tree, values + 3);
     insert_tree(tree, values + 4);
-    print_tree(tree, 0);
     system("pause");
 }
