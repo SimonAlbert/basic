@@ -78,7 +78,7 @@ void exchange(value_type *a, value_type *b) {
  */
 int value_array_insert(value_type *arr, const int count, const value_type *v) {
     // 节点满
-    if (count == MAX_VALUE_COUNT) return 1;
+    if (count > MAX_VALUE_COUNT) return 1;
     // 找到目标位置(下标)
     int position = 0;
     while(position < count && *v > arr[position]){
@@ -102,7 +102,7 @@ int value_array_insert(value_type *arr, const int count, const value_type *v) {
  */
 int value_directed_insert(value_type *arr, int num, const value_type *v, int dis_index) {
     // 节点关键字数组已满
-    if(num >= MAX_VALUE_COUNT){
+    if(num > MAX_VALUE_COUNT){
         return -1;
     }
     for (int i = num; i > dis_index; --i) {
@@ -145,11 +145,11 @@ void split(pTreeNode parent_node, int index)
     printf("\n分裂节点:%d\n", split_node);
     // 新节点size
     child1->size = MIN_VALUE_COUNT;
-    child2->size = MAX_VALUE_COUNT - MIN_VALUE_COUNT -1;
+    child2->size = M - (MIN_VALUE_COUNT + 1);
     child1->is_leaf = split_node->is_leaf;
     child2->is_leaf = split_node->is_leaf;
     // M=5 min=2 max=4
-    // 0, 1, 2, 3
+    // 0, 1, 2, 3, 4
     // 关键字分配
     // split_node->values的[0, MIN_VALUE_COUNT - 1]放入child1
     // [0, 2)
@@ -157,8 +157,8 @@ void split(pTreeNode parent_node, int index)
         child1->values[i] = split_node->values[i];
     }
     // split_node->values的[MIN_VALUE_COUNT + 1, MAX_VALUE_COUNT]放入child2
-    // [3, 4)
-    for (int i = MIN_VALUE_COUNT + 1, j = 0; i < MAX_VALUE_COUNT; ++i, ++j) {
+    // [3, 4]
+    for (int i = MIN_VALUE_COUNT + 1, j = 0; i <= MAX_VALUE_COUNT; ++i, ++j) {
         child2->values[j] = split_node->values[i];
     }
     // 子节点分配
@@ -169,18 +169,18 @@ void split(pTreeNode parent_node, int index)
     }
     // split_node->children的[MIN_VALUE_COUNT + 1, M]放入child2
     // [3, 4]
-    for (int i = MIN_VALUE_COUNT + 1, j = 0; i <= MAX_VALUE_COUNT; ++i, ++j) {
-        child1->children[j] = split_node->children[i];
+    for (int i = MIN_VALUE_COUNT + 1, j = 0; i <= M; ++i, ++j) {
+        child2->children[j] = split_node->children[i];
     }
 
     // 上溢
     // split_node->values[MIN_VALUE_COUNT]插入到父节点的values[index]
     value_directed_insert(parent_node->values, parent_node->size, split_node->values + MIN_VALUE_COUNT, index);
+    // 当前节点size++
     parent_node->size++;
     // child1替换当前节点的children[index], child2插入到当前节点的children[index+1]
     parent_node->children[index] = child1;
     node_directed_insert(parent_node->children, parent_node->size, child2, index + 1);
-    // 当前节点size++
 }
 void print_spaces(int deep){
     for (int i = 0; i < deep; ++i) {
@@ -229,7 +229,8 @@ int insert(pTreeNode current_node, value_type *v) {
     if (current_node->is_leaf) { // 叶节点
         value_array_insert(current_node->values, current_node->size, v);
         current_node->size++;
-    } else { // 非叶节点
+    } else {
+        // 非叶节点
         // 找到要插入的关键字下标position
         int position = 0;
         while(current_node->values[position] < *v && position < current_node->size) {
@@ -242,44 +243,68 @@ int insert(pTreeNode current_node, value_type *v) {
             split(current_node, position);
         }
     }
-    return current_node->size >= MAX_VALUE_COUNT;
+    return current_node->size > MAX_VALUE_COUNT;
 }
 
 // 处理根节点
 void insert_tree(pTreeNode root, value_type *v) {
+    int leaf = 0;
     //只有根节点
-    if(root->is_root && root->is_leaf && root->size < MAX_VALUE_COUNT){
+    if(root->is_root && root->is_leaf && root->size <= MAX_VALUE_COUNT){
         // 插入值
         value_array_insert(root->values, root->size, v);
         root->size += 1;
-        if(root->size == MAX_VALUE_COUNT){
-            // 先创建两个新节点
-            pTreeNode child1 = createNode();
-            pTreeNode child2 = createNode();
-            // [0, 2]
-            for (int i = 0; i < MIN_VALUE_COUNT; ++i) {
-                child1->values[i] = root->values[i];
-            }
-            child1->size = MIN_VALUE_COUNT;
-            // [3, 4]
-            for (int i = MIN_VALUE_COUNT + 1, j = 0; i < MAX_VALUE_COUNT; ++i, ++j) {
-                child2->values[j] = root->values[i];
-            }
-            child2->size = MAX_VALUE_COUNT - MIN_VALUE_COUNT - 1;
-            root->values[0] = root->values[MIN_VALUE_COUNT];
-            root->size = 1;
-            root->is_leaf = 0;
-            // 建立连接
-            root->children[0] = child1;
-            root->children[1] = child2;
-        }
+        leaf = 1;
     } else {
         insert(root, v);
+        leaf = 0;
+    }
+    if(root->size > MAX_VALUE_COUNT){
+        printf("分裂根节点\n");
+        // 先创建两个新节点
+        pTreeNode child1 = createNode();
+        pTreeNode child2 = createNode();
+        child1->is_leaf = leaf;
+        child2->is_leaf = leaf;
+        // [0, 1, 2, 3, 4]
+        // [0, 1] [2] [3, 4]
+        // [0, 1]
+        for (int i = 0; i < MIN_VALUE_COUNT; ++i) {
+            child1->values[i] = root->values[i];
+        }
+        child1->size = MIN_VALUE_COUNT;
+        // [3, 4]
+        for (int i = MIN_VALUE_COUNT + 1, j = 0; i <= MAX_VALUE_COUNT; ++i, ++j) {
+            child2->values[j] = root->values[i];
+        }
+        child2->size = M - MIN_VALUE_COUNT - 1;
+
+        // 子节点分配
+        // split_node->children的[0, MIN_VALUE_COUNT]放入child1
+        // [0, 2]
+        for (int i = 0; i <= MIN_VALUE_COUNT; ++i) {
+            child1->children[i] = root->children[i];
+        }
+        // split_node->children的[MIN_VALUE_COUNT + 1, M]放入child2
+        // [3, 4]
+        for (int i = MIN_VALUE_COUNT + 1, j = 0; i <= M; ++i, ++j) {
+            child2->children[j] = root->children[i];
+        }
+
+        // [2]
+        root->values[0] = root->values[MIN_VALUE_COUNT];
+        root->size = 1;
+        root->is_leaf = 0;
+        // 建立连接
+        root->children[0] = child1;
+        root->children[1] = child2;
     }
 }
 
 int main() {
-    value_type values[] = { 4, 7, 9, 5, 11, 3, 2, 10, 100, 78, 66, 80, 88, 30, 35, 40, 60, 59};
+    value_type values[] = { 4, 7, 9, 5, 11, 3, 2, 10, 100, 78, 66, 80,
+                            88, 30, 35, 40, 60, 59, 110, 120, 130, 140,
+                            150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250};
     pTreeNode root = createNode();
     root->is_root = 1;
     for (int i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
