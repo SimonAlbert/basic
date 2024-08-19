@@ -142,7 +142,7 @@ void split(pTreeNode parent_node, int index)
     // 非叶子节点
     // 取待分裂节点
     pTreeNode split_node = parent_node->children[index];
-    printf("\n分裂节点:%d\n", split_node);
+    printf("分裂节点:%d\n", split_node);
     // 新节点size
     child1->size = MIN_VALUE_COUNT;
     child2->size = M - (MIN_VALUE_COUNT + 1);
@@ -187,45 +187,71 @@ void print_spaces(int deep){
         printf("    ");
     }
 }
-void print(pTreeNode t, int deep){
+void print(pTreeNode t, int deep, int num){
+    print_spaces(deep);
     if(t->is_root) {
         printf("根节点%d: ", t);
+    } else {
+        printf("%d号子节点%d > ", num, t);
     }
     for (int i = 0; i < t->size; ++i) {
         printf("%d ", t->values[i]);
     }
+    printf("\n");
     if(!t->is_leaf) {
         for (int i = 0; i <= t->size; ++i) {
-            printf("\n");
-            print_spaces(deep);
-            printf("%d号子节点%d > ", i, t->children[i]);
-            print(t->children[i], deep + 1);
+            print(t->children[i], deep + 1, i);
         }
-    } else {
-        printf("\n");
     }
 }
 pTreeNode find(pTreeNode t, value_type *v) {
-    // 空树
-
+    // 小于最小
+    if(t->values[0] > *v){
+        return find(t->children[0], v);
+    }
     // 找到新value的位置
     value_type tmp;
     for (int i = 0; i < t->size; ++i) {
         tmp = t->values[i];
         if (tmp == *v) {
+            printf("%d元素定位: %d节点下标为%d的元素\n", *v, t, i);
             return t;
         } else if (tmp < *v && t->values[i + 1] > *v) {
             return find(t->children[i], v);
         }
     }
-    return find(t->children[t->size - 1], v);
+    // 大于最大
+    return find(t->children[t->size], v);
+}
+
+// 后继节点
+pTreeNode successor(pTreeNode t, value_type *v) {
+
+}
+
+// 前继节点
+pTreeNode predecessor(pTreeNode t, value_type *v) {
+
+}
+
+// 节点合并
+int merge(){
+
+}
+// 删除值
+int delete(pTreeNode t, value_type *v){
+    // 1. 非叶节点删除, 替换前继节点或后继节点的值, 一直替换到叶节点, 然后由叶节点执行删除
+    // 2. 叶节点删除
+    // 如果叶节点够, 直接删
+    // 如果不够, 找左右兄弟要
+    // 如果左右兄弟都不够, 尝试左右合并
 }
 
 /* 只能插入叶子节点
  * return 0: 成功 1: 超限
  */
 int insert(pTreeNode current_node, value_type *v) {
-    printf("%d <- %d\n", current_node, *v);
+    printf("%d插入节点%d\n", *v, current_node);
     if (current_node->is_leaf) { // 叶节点
         value_array_insert(current_node->values, current_node->size, v);
         current_node->size++;
@@ -309,6 +335,9 @@ int main() {
     root->is_root = 1;
     for (int i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
         insert_tree(root, values + i);
-        print(root, 1);
+        print(root, 0, 0);
     }
+    int a = 200;
+    pTreeNode position = find(root, &a);
+    printf("%d", position);
 }
