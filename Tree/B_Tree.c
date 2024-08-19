@@ -22,8 +22,8 @@
 // 关键字类型
 typedef int value_type;
 #define M 5 // 阶数(最大子节点数)
-int MAX_VALUE_COUNT = M - 1; // 最大关键字数
-int MIN_VALUE_COUNT = M / 2; // 最小关键字数
+const int MAX_VALUE_COUNT = M - 1; // 最大关键字数
+int MIN_VALUE_COUNT = MAX_VALUE_COUNT / 2; // 最小关键字数
 // 除根结点外的其它结点的最小关键字数为MIN_VALUE_COUNT, 最大关键字数为MAX_VALUE_COUNT; 最小子节点数为MIN_VALUE_COUNT+1, 最大子节点数为MAX_VALUE_COUNT+1
 // 节点定义
 typedef struct TreeNode {
@@ -205,33 +205,86 @@ void print(pTreeNode t, int deep, int num){
     }
 }
 pTreeNode find(pTreeNode t, value_type *v) {
+    if(t->is_leaf){
+        value_type tmp;
+        for (int i = 0; i < t->size; ++i) {
+            tmp = t->values[i];
+            if (tmp == *v) {
+                printf("%d元素定位: %d节点下标为%d的元素\n", *v, t, i);
+                return t;
+            }
+        }
+        printf("没有查找到元素%d\n", *v);
+        return NULL;
+    }
     // 小于最小
     if(t->values[0] > *v){
         return find(t->children[0], v);
     }
     // 找到新value的位置
     value_type tmp;
-    for (int i = 0; i < t->size; ++i) {
+    for (int i = 0; i < t->size - 1; ++i) {
         tmp = t->values[i];
         if (tmp == *v) {
             printf("%d元素定位: %d节点下标为%d的元素\n", *v, t, i);
             return t;
-        } else if (tmp < *v && t->values[i + 1] > *v) {
-            return find(t->children[i], v);
+        } else if (tmp < *v && *v < t->values[i + 1]) {
+            return find(t->children[i + 1], v);
         }
     }
+    if(*v == t->values[t->size - 1]){
+        printf("%d元素定位: %d节点下标为%d的元素\n", *v, t, t->size - 1);
+        return t;
+    }
+
     // 大于最大
     return find(t->children[t->size], v);
 }
-
-// 后继节点
+// 传入节点下属最大值所在节点
+pTreeNode find_max(pTreeNode cur){
+    if(cur->is_leaf){
+        return cur;
+    } else {
+        return find_max(cur->children[cur->size - 1]);
+    }
+}
+// 传入节点下属最小值所在节点
+pTreeNode find_min(pTreeNode cur){
+    if(cur->is_leaf){
+        return cur;
+    } else {
+        return find_max(cur->children[0]);
+    }
+}
+// 后继节点, 比自己大的最小的
 pTreeNode successor(pTreeNode t, value_type *v) {
-
+    if(t->is_leaf){
+        return t;
+    } else {
+        // 小于最小
+        if(t->values[0] > *v){
+            return successor(t->children[0], v);
+        }
+        // 找到新value的位置
+        value_type tmp;
+        for (int i = 0; i < t->size; ++i) {
+            tmp = t->values[i];
+            if (tmp < *v && *v < t->values[i + 1]) {
+                return successor(t->children[i], v);
+            }
+        }
+        // 大于最大
+        return successor(t->children[t->size], v);
+    }
 }
 
-// 前继节点
+// 前继节点, 比自己小的最大的
 pTreeNode predecessor(pTreeNode t, value_type *v) {
+    if(t->is_leaf){
+        return t;
+    } else {
 
+    }
 }
 
 // 节点合并
@@ -331,13 +384,14 @@ int main() {
     value_type values[] = { 4, 7, 9, 5, 11, 3, 2, 10, 100, 78, 66, 80,
                             88, 30, 35, 40, 60, 59, 110, 120, 130, 140,
                             150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250};
+//    value_type values[] = { 1,2,3,4,5,6,7,8};
     pTreeNode root = createNode();
     root->is_root = 1;
     for (int i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
         insert_tree(root, values + i);
         print(root, 0, 0);
     }
-    int a = 200;
+    int a = 78;
     pTreeNode position = find(root, &a);
     printf("%d", position);
 }
