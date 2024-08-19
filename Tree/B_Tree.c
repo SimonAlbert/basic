@@ -1,15 +1,13 @@
 //
 // Created by Simon on 2023/4/17.
 //
-#include <stdio.h>
-#include <stdlib.h>
 /*
- * B-tree æ•°ç»„å®ç°
- * M Bæ ‘çš„é˜¶
- * size èŠ‚ç‚¹å…³é”®å­—æ•°
- * values å…³é”®å­—æ•°ç»„
- * children å­èŠ‚ç‚¹æ•°ç»„
- *    2-3-4æ ‘ä¸ºä¾‹
+ * B-tree Êı×éÊµÏÖ
+ * M BÊ÷µÄ½×
+ * size ½Úµã¹Ø¼ü×ÖÊı
+ * values ¹Ø¼ü×ÖÊı×é
+ * children ×Ó½ÚµãÊı×é
+ *    2-3-4Ê÷ÎªÀı
  *
  *          root
  *        /      \
@@ -17,83 +15,93 @@
  *     / | \    / \
  *    E  F G   H   I
  */
+#include <stdio.h>
+#include <stdlib.h>
+
+
+// ¹Ø¼ü×ÖÀàĞÍ
 typedef int value_type;
-#define M 4 // é˜¶æ•°(æœ€å¤§å­èŠ‚ç‚¹æ•°)
-int MAX_VALUE_COUNT = M - 1; // æœ€å¤§å…³é”®å­—æ•°
-int MIN_VALUE_COUNT = M / 2; // æœ€å°å…³é”®å­—æ•°
-// é™¤æ ¹ç»“ç‚¹å¤–çš„å…¶å®ƒç»“ç‚¹çš„æœ€å°å…³é”®å­—æ•°ä¸ºMIN_VALUE_COUNT, æœ€å¤§å…³é”®å­—æ•°ä¸ºMAX_VALUE_COUNT; æœ€å°å­èŠ‚ç‚¹æ•°ä¸ºMIN_VALUE_COUNT+1, æœ€å¤§å­èŠ‚ç‚¹æ•°ä¸ºMAX_VALUE_COUNT+1
-// èŠ‚ç‚¹å®šä¹‰
+#define M 5 // ½×Êı(×î´ó×Ó½ÚµãÊı)
+int MAX_VALUE_COUNT = M - 1; // ×î´ó¹Ø¼ü×ÖÊı
+int MIN_VALUE_COUNT = M / 2; // ×îĞ¡¹Ø¼ü×ÖÊı
+// ³ı¸ù½áµãÍâµÄÆäËü½áµãµÄ×îĞ¡¹Ø¼ü×ÖÊıÎªMIN_VALUE_COUNT, ×î´ó¹Ø¼ü×ÖÊıÎªMAX_VALUE_COUNT; ×îĞ¡×Ó½ÚµãÊıÎªMIN_VALUE_COUNT+1, ×î´ó×Ó½ÚµãÊıÎªMAX_VALUE_COUNT+1
+// ½Úµã¶¨Òå
 typedef struct TreeNode {
     int size;
     value_type* values;
     struct TreeNode** children;
     struct TreeNode* parent;
     int is_leaf;
+    int is_root;
 } *pTreeNode, TreeNode;
 
 pTreeNode createNode();
 void exchange(value_type *a, value_type *b);
-int key_array_insert(value_type *arr, const int count, const value_type *v);
-int key_directed_insert(value_type *arr, int num, const value_type *v, int dis_index);
+int value_array_insert(value_type *arr, const int count, const value_type *v);
+int value_directed_insert(value_type *arr, int num, const value_type *v, int dis_index);
 int node_directed_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index);
-void split(pTreeNode current_node, int index);
+void split(pTreeNode parent_node, int index);
 pTreeNode find(pTreeNode t, value_type *v);
 int insert(pTreeNode current_node, value_type *v);
 void insert_tree(pTreeNode root, value_type *v);
 
-// åˆ›å»ºèŠ‚ç‚¹
+// ´´½¨½Úµã
 pTreeNode createNode(){
     pTreeNode pNode = (pTreeNode) malloc(sizeof(TreeNode));
     pNode->size = 0;
     pNode->values = (value_type*) malloc(sizeof(value_type) * M);
-    for (int i = 0; i < M; ++i) {
-        pNode->values[i] = 0;
-    }
-    // æŒ‡å‘å­èŠ‚ç‚¹çš„æŒ‡é’ˆæ•°ç»„, é˜¶æ•°ä¸ä¼šå¾ˆå¤§, ç©ºé—´æµªè´¹å°
+    // Ö¸Ïò×Ó½ÚµãµÄÖ¸ÕëÊı×é, ½×Êı²»»áºÜ´ó, ¿Õ¼äÀË·ÑĞ¡
     pNode->children = (pTreeNode*) malloc(sizeof(pTreeNode) * M);
+    for (int i = 0; i < M; ++i) {
+        //ÉèÖÃÄ¬ÈÏÖµ
+        pNode->values[i] = 0;
+        pNode->children[i] = NULL;
+    }
+    pNode->parent = NULL;
     pNode->is_leaf = 1;
+    pNode->is_root = 0;
     return pNode;
 }
 
-// å…³é”®å­—æ¢å€¼
+// ¹Ø¼ü×Ö»»Öµ
 void exchange(value_type *a, value_type *b) {
     value_type tmp = *a;
     *a = *b;
     *b = tmp;
 }
 
-/* æœ‰åºæ•°ç»„ä¸­æ’å…¥
- * arr æ•°ç»„
- * count æ•°ç»„é•¿åº¦
- * v è¦æ’å…¥çš„å…³é”®å­—
- * return 0æˆåŠŸ 1å¤±è´¥
+/* ÓĞĞòÊı×éÖĞ²åÈë
+ * arr Êı×é
+ * count Êı×é³¤¶È
+ * v Òª²åÈëµÄ¹Ø¼ü×Ö
+ * return 0³É¹¦ 1Ê§°Ü
  */
-int key_array_insert(value_type *arr, const int count, const value_type *v) {
-    // èŠ‚ç‚¹æ»¡
+int value_array_insert(value_type *arr, const int count, const value_type *v) {
+    // ½ÚµãÂú
     if (count == MAX_VALUE_COUNT) return 1;
-    // æ‰¾åˆ°ç›®æ ‡ä½ç½®(ä¸‹æ ‡)
+    // ÕÒµ½Ä¿±êÎ»ÖÃ(ÏÂ±ê)
     int position = 0;
     while(position < count && *v > arr[position]){
         position++;
     }
-    // ä»åå‘å‰éå†åˆ°position, æ¯ä¸ªåç§»ä¸€ä½, å‡å°‘exchangeå¸¦æ¥çš„å†…å­˜å¤åˆ¶
+    // ´ÓºóÏòÇ°±éÀúµ½position, Ã¿¸öºóÒÆÒ»Î», ¼õÉÙexchange´øÀ´µÄÄÚ´æ¸´ÖÆ
     for (int i = count; i > position; i--) {
         arr[i] = arr[i-1];
     }
-    // æ’å…¥æ–°å…³é”®å­—
+    // ²åÈëĞÂ¹Ø¼ü×Ö
     arr[position] = *v;
     return 0;
 }
 
-/* æœ‰åºæ•°ç»„æ’å…¥åˆ°æŒ‡å®šä¸‹æ ‡
- * arr æ•°ç»„
- * num æ•°ç»„é•¿åº¦
- * v è¦æ’å…¥çš„å…³é”®å­—
- * dis_index ç›®æ ‡ä¸‹æ ‡
- * return -1: è¶…é™ 0: æˆåŠŸ
+/* ÓĞĞòÊı×é²åÈëµ½Ö¸¶¨ÏÂ±ê
+ * arr Êı×é
+ * num Êı×é³¤¶È
+ * v Òª²åÈëµÄ¹Ø¼ü×Ö
+ * dis_index Ä¿±êÏÂ±ê
+ * return -1: ³¬ÏŞ 0: ³É¹¦
  */
-int key_directed_insert(value_type *arr, int num, const value_type *v, int dis_index) {
-    // èŠ‚ç‚¹å…³é”®å­—æ•°ç»„å·²æ»¡
+int value_directed_insert(value_type *arr, int num, const value_type *v, int dis_index) {
+    // ½Úµã¹Ø¼ü×ÖÊı×éÒÑÂú
     if(num >= MAX_VALUE_COUNT){
         return -1;
     }
@@ -103,92 +111,104 @@ int key_directed_insert(value_type *arr, int num, const value_type *v, int dis_i
     arr[dis_index] = *v;
     return 0;
 }
-/* æ–°çš„å­èŠ‚ç‚¹æ’å…¥åˆ°æŒ‡å®šä¸‹æ ‡
- * arr èŠ‚ç‚¹æ•°ç»„
- * num æ•°ç»„é•¿åº¦
- * v è¦æ’å…¥çš„èŠ‚ç‚¹
- * dis_index ç›®æ ‡ä¸‹æ ‡
- * return -1: è¶…é™ 0: æˆåŠŸ
+/* ĞÂµÄ×Ó½Úµã²åÈëµ½Ö¸¶¨ÏÂ±ê
+ * arr ½ÚµãÊı×é
+ * num Êı×é³¤¶È
+ * v Òª²åÈëµÄ½Úµã
+ * dis_index Ä¿±êÏÂ±ê
+ * return -1: ³¬ÏŞ 0: ³É¹¦
  */
 int node_directed_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
-    if(num >= M){
+    if(num > M){
         return -1;
     }
     for (int i = num; i > dis_index; --i) {
-        arr[i] = arr[i-1];
+        arr[i] = arr[i - 1];
     }
     arr[dis_index] = v;
     return 0;
 }
 
 /*
- * ç¬¬ä¸€ç§æ‹†åˆ†æ–¹æ³•, ä¸ä½¿ç”¨çˆ¶èŠ‚ç‚¹æŒ‡é’ˆ
- * ç”±çˆ¶èŠ‚ç‚¹è¿›è¡Œæ“ä½œ, å¯¹çˆ¶èŠ‚ç‚¹çš„ç¬¬iä¸ªå­èŠ‚ç‚¹è¿›è¡Œæ‹†åˆ†
+ * µÚÒ»ÖÖ²ğ·Ö·½·¨, ²»Ê¹ÓÃ½ÚµãÄÚ²¿µÄparentÖ¸Õë
+ * ÓÉ¸¸½Úµã½øĞĞ²Ù×÷, ¶Ô¸¸½ÚµãµÄµÚi¸ö×Ó½Úµã½øĞĞ²ğ·Ö
  */
-void split(pTreeNode current_node, int index)
+void split(pTreeNode parent_node, int index)
 {
-    // å…ˆåˆ›å»ºä¸¤ä¸ªæ–°èŠ‚ç‚¹
+    // ÏÈ´´½¨Á½¸öĞÂ½Úµã
     pTreeNode child1 = createNode();
     pTreeNode child2 = createNode();
-    // ä»…æœ‰ä¸€ä¸ªå¶èŠ‚ç‚¹æ—¶, ä¸€åˆ†ä¸ºäºŒ, æ ¹èŠ‚ç‚¹åªä¿ç•™ä¸€ä¸ªvalue
-//    if(current_node->is_leaf){
-//        // å…³é”®å­—å¡«å……
-//        child1->size = MIN_VALUE_COUNT;
-//        for (int i = 0; i < MIN_VALUE_COUNT; ++i) {
-//            child1->values[i] = current_node->values[i];
-//        }
-//        child2->size = M - MIN_VALUE_COUNT - 1;
-//        for (int i = MIN_VALUE_COUNT + 1; i < M; ++i) {
-//            child2->values[i] = current_node->values[i];
-//        }
-//        current_node->values[0] = current_node->values[MIN_VALUE_COUNT];
-//        current_node->size = 1;
-//        current_node->is_leaf = 0;
-//        // å»ºç«‹è¿æ¥
-//        current_node->children[0] = child1;
-//        current_node->children[1] = child2;
-//        return;
-//    }else {
-        // éå¶å­èŠ‚ç‚¹
-        // å–å¾…åˆ†è£‚èŠ‚ç‚¹
-        pTreeNode split_node = current_node->children[index];
-        // æ–°èŠ‚ç‚¹size
-        child1->size = MIN_VALUE_COUNT;
-        child2->size = MAX_VALUE_COUNT - MIN_VALUE_COUNT -1;
-        child1->is_leaf = split_node->is_leaf;
-        child2->is_leaf = split_node->is_leaf;
-        // å…³é”®å­—æ‹†åˆ†
-        // split_node->valuesçš„[0, MIN_VALUE_COUNT-1]æ”¾å…¥child1
-        for (int i = 0; i < MIN_VALUE_COUNT; ++i) {
-            child1->values[i] = split_node->values[i];
-        }
-        // split_node->valuesçš„[MIN_VALUE_COUNT+1, MAX_VALUE_COUNT-1]æ”¾å…¥child2
-        for (int i = MIN_VALUE_COUNT; i < MIN_VALUE_COUNT; ++i) {
-            child2->values[i] = split_node->values[i];
-        }
-        // å­èŠ‚ç‚¹è¿æ¥åˆ°æ–°èŠ‚ç‚¹
-        // split_node->childrençš„[0, MIN_VALUE_COUNT]æ”¾å…¥child1
-        for (int i = 0; i <= MIN_VALUE_COUNT; ++i) {
-            child1->children[i] = split_node->children[i];
-        }
-        // split_node->childrençš„[MIN_VALUE_COUNT+1, MAX_VALUE_COUNT]æ”¾å…¥child2
-        for (int i = MIN_VALUE_COUNT; i <= MAX_VALUE_COUNT; ++i) {
-            child1->children[i] = split_node->children[i];
-        }
-        // split_node->values[MIN_VALUE_COUNT]æ’å…¥åˆ°å½“å‰èŠ‚ç‚¹çš„values[index]
-        key_directed_insert(current_node->values, current_node->size, split_node->values + MIN_VALUE_COUNT, index);
-        // child1æ›¿æ¢å½“å‰èŠ‚ç‚¹çš„children[index], child2æ’å…¥åˆ°å½“å‰èŠ‚ç‚¹çš„children[index+1]
-        current_node->children[index] = child1;
-        node_directed_insert(current_node->children, current_node->size, child2, index + 1);
-        // å½“å‰èŠ‚ç‚¹size++
-        current_node->size++;
-//    }
+
+    // ·ÇÒ¶×Ó½Úµã
+    // È¡´ı·ÖÁÑ½Úµã
+    pTreeNode split_node = parent_node->children[index];
+    printf("\n·ÖÁÑ½Úµã:%d\n", split_node);
+    // ĞÂ½Úµãsize
+    child1->size = MIN_VALUE_COUNT;
+    child2->size = MAX_VALUE_COUNT - MIN_VALUE_COUNT -1;
+    child1->is_leaf = split_node->is_leaf;
+    child2->is_leaf = split_node->is_leaf;
+    // M=5 min=2 max=4
+    // 0, 1, 2, 3
+    // ¹Ø¼ü×Ö·ÖÅä
+    // split_node->valuesµÄ[0, MIN_VALUE_COUNT - 1]·ÅÈëchild1
+    // [0, 2)
+    for (int i = 0; i < MIN_VALUE_COUNT; ++i) {
+        child1->values[i] = split_node->values[i];
+    }
+    // split_node->valuesµÄ[MIN_VALUE_COUNT + 1, MAX_VALUE_COUNT]·ÅÈëchild2
+    // [3, 4)
+    for (int i = MIN_VALUE_COUNT + 1, j = 0; i < MAX_VALUE_COUNT; ++i, ++j) {
+        child2->values[j] = split_node->values[i];
+    }
+    // ×Ó½Úµã·ÖÅä
+    // split_node->childrenµÄ[0, MIN_VALUE_COUNT]·ÅÈëchild1
+    // [0, 2]
+    for (int i = 0; i <= MIN_VALUE_COUNT; ++i) {
+        child1->children[i] = split_node->children[i];
+    }
+    // split_node->childrenµÄ[MIN_VALUE_COUNT + 1, M]·ÅÈëchild2
+    // [3, 4]
+    for (int i = MIN_VALUE_COUNT + 1, j = 0; i <= MAX_VALUE_COUNT; ++i, ++j) {
+        child1->children[j] = split_node->children[i];
+    }
+
+    // ÉÏÒç
+    // split_node->values[MIN_VALUE_COUNT]²åÈëµ½¸¸½ÚµãµÄvalues[index]
+    value_directed_insert(parent_node->values, parent_node->size, split_node->values + MIN_VALUE_COUNT, index);
+    parent_node->size++;
+    // child1Ìæ»»µ±Ç°½ÚµãµÄchildren[index], child2²åÈëµ½µ±Ç°½ÚµãµÄchildren[index+1]
+    parent_node->children[index] = child1;
+    node_directed_insert(parent_node->children, parent_node->size, child2, index + 1);
+    // µ±Ç°½Úµãsize++
 }
-
+void print_spaces(int deep){
+    for (int i = 0; i < deep; ++i) {
+        printf("    ");
+    }
+}
+void print(pTreeNode t, int deep){
+    if(t->is_root) {
+        printf("¸ù½Úµã%d: ", t);
+    }
+    for (int i = 0; i < t->size; ++i) {
+        printf("%d ", t->values[i]);
+    }
+    if(!t->is_leaf) {
+        for (int i = 0; i <= t->size; ++i) {
+            printf("\n");
+            print_spaces(deep);
+            printf("%dºÅ×Ó½Úµã%d > ", i, t->children[i]);
+            print(t->children[i], deep + 1);
+        }
+    } else {
+        printf("\n");
+    }
+}
 pTreeNode find(pTreeNode t, value_type *v) {
-    // ç©ºæ ‘
+    // ¿ÕÊ÷
 
-    // æ‰¾åˆ°æ–°keyçš„ä½ç½®
+    // ÕÒµ½ĞÂvalueµÄÎ»ÖÃ
     value_type tmp;
     for (int i = 0; i < t->size; ++i) {
         tmp = t->values[i];
@@ -201,52 +221,69 @@ pTreeNode find(pTreeNode t, value_type *v) {
     return find(t->children[t->size - 1], v);
 }
 
-/* åªèƒ½æ’å…¥å¶å­èŠ‚ç‚¹
- * return 0: æˆåŠŸ 1: è¶…é™
+/* Ö»ÄÜ²åÈëÒ¶×Ó½Úµã
+ * return 0: ³É¹¦ 1: ³¬ÏŞ
  */
 int insert(pTreeNode current_node, value_type *v) {
-    printf("%d <- %d\n", current_node->size, *v);
-    if (current_node->is_leaf) { // å¶èŠ‚ç‚¹
-        int insert = key_array_insert(current_node->values, current_node->size, v);
-        if(insert){
-            return 1;
-        }
+    printf("%d <- %d\n", current_node, *v);
+    if (current_node->is_leaf) { // Ò¶½Úµã
+        value_array_insert(current_node->values, current_node->size, v);
         current_node->size++;
-    } else { // éå¶èŠ‚ç‚¹
-        // æ‰¾åˆ°è¦æ’å…¥çš„å…³é”®å­—ä¸‹æ ‡position
+    } else { // ·ÇÒ¶½Úµã
+        // ÕÒµ½Òª²åÈëµÄ¹Ø¼ü×ÖÏÂ±êposition
         int position = 0;
-        while(current_node->values[position] < *v) {
+        while(current_node->values[position] < *v && position < current_node->size) {
             position++;
         }
-        // å°†æ–°å…³é”®å­—æ’å…¥positionæŒ‡å‘çš„å­èŠ‚ç‚¹
+        // ½«ĞÂ¹Ø¼ü×Ö²åÈëpositionÖ¸ÏòµÄ×Ó½Úµã
         int ret = insert(current_node->children[position], v);
-        if(ret){// å¦‚æœå­èŠ‚ç‚¹è¶…é™, åˆ™åˆ†è£‚
+        if(ret){
+            // Èç¹û×Ó½Úµã³¬ÏŞ, Ôò·ÖÁÑ
             split(current_node, position);
         }
     }
     return current_node->size >= MAX_VALUE_COUNT;
 }
 
-// å¤„ç†æ ¹èŠ‚ç‚¹åœºæ™¯
+// ´¦Àí¸ù½Úµã
 void insert_tree(pTreeNode root, value_type *v) {
-    if(insert(root, v)){
-        // åˆ›å»ºæ–°çš„æ ¹èŠ‚ç‚¹
-        pTreeNode new_root = createNode();
-        TreeNode old_root = *root;
-        new_root->is_leaf = 0;
-        new_root->children[0] = &old_root;
-        split(new_root, 0);
-        *root = *new_root;
+    //Ö»ÓĞ¸ù½Úµã
+    if(root->is_root && root->is_leaf && root->size < MAX_VALUE_COUNT){
+        // ²åÈëÖµ
+        value_array_insert(root->values, root->size, v);
+        root->size += 1;
+        if(root->size == MAX_VALUE_COUNT){
+            // ÏÈ´´½¨Á½¸öĞÂ½Úµã
+            pTreeNode child1 = createNode();
+            pTreeNode child2 = createNode();
+            // [0, 2]
+            for (int i = 0; i < MIN_VALUE_COUNT; ++i) {
+                child1->values[i] = root->values[i];
+            }
+            child1->size = MIN_VALUE_COUNT;
+            // [3, 4]
+            for (int i = MIN_VALUE_COUNT + 1, j = 0; i < MAX_VALUE_COUNT; ++i, ++j) {
+                child2->values[j] = root->values[i];
+            }
+            child2->size = MAX_VALUE_COUNT - MIN_VALUE_COUNT - 1;
+            root->values[0] = root->values[MIN_VALUE_COUNT];
+            root->size = 1;
+            root->is_leaf = 0;
+            // ½¨Á¢Á¬½Ó
+            root->children[0] = child1;
+            root->children[1] = child2;
+        }
+    } else {
+        insert(root, v);
     }
 }
 
 int main() {
-    int values[] = { 4, 7, 9, 5, 11};
-    pTreeNode tree = createNode();
-    insert_tree(tree, values + 0);
-    insert_tree(tree, values + 1);
-    insert_tree(tree, values + 2);
-    insert_tree(tree, values + 3);
-    insert_tree(tree, values + 4);
-    system("pause");
+    value_type values[] = { 4, 7, 9, 5, 11, 3, 2, 10, 100, 78, 66, 80, 88, 30, 35, 40, 60, 59};
+    pTreeNode root = createNode();
+    root->is_root = 1;
+    for (int i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
+        insert_tree(root, values + i);
+        print(root, 1);
+    }
 }
