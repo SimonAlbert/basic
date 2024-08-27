@@ -253,8 +253,30 @@ pTreeNode find_min(pTreeNode cur){
     if(cur->is_leaf){
         return cur;
     } else {
-        return find_max(cur->children[0]);
+        return find_min(cur->children[0]);
     }
+}
+// 前驱节点, 比自己小的最大的
+pTreeNode predecessor(pTreeNode t, value_type *v) {
+    if(t->is_leaf){
+        return t;
+    } else {
+        // 小于最小
+        if(*v <= t->values[0]){
+            return predecessor(t->children[0], v);
+        }
+        // 大于最大
+        if(*v > t->values[t->size - 1]){
+            return predecessor(t->children[t->size], v);
+        }
+        // 扫描定位
+        for (int i = 0; i < t->size - 1; ++i) {
+            if (t->values[i] < *v && *v <= t->values[i + 1]) {
+                return predecessor(t->children[i + 1], v);
+            }
+        }
+    }
+    return NULL;
 }
 // 后继节点, 比自己大的最小的
 pTreeNode successor(pTreeNode t, value_type *v) {
@@ -262,30 +284,23 @@ pTreeNode successor(pTreeNode t, value_type *v) {
         return t;
     } else {
         // 小于最小
-        if(t->values[0] > *v){
+        if(*v < t->values[0]){
             return successor(t->children[0], v);
         }
-        // 找到新value的位置
-        value_type tmp;
-        for (int i = 0; i < t->size; ++i) {
-            tmp = t->values[i];
-            if (tmp < *v && *v < t->values[i + 1]) {
-                return successor(t->children[i], v);
+        // 大于最大
+        if(*v >= t->values[t->size - 1]){
+            return successor(t->children[t->size], v);
+        }
+        // 扫描定位
+        for (int i = 0; i < t->size - 1; ++i) {
+            if (t->values[i] <= *v && *v < t->values[i + 1]) {
+                return successor(t->children[i + 1], v);
             }
         }
-        // 大于最大
-        return successor(t->children[t->size], v);
     }
+    return NULL;
 }
 
-// 前继节点, 比自己小的最大的
-pTreeNode predecessor(pTreeNode t, value_type *v) {
-    if(t->is_leaf){
-        return t;
-    } else {
-
-    }
-}
 
 // 节点合并
 int merge(){
@@ -293,7 +308,8 @@ int merge(){
 }
 // 删除值
 int delete(pTreeNode t, value_type *v){
-    // 1. 非叶节点删除, 替换前继节点或后继节点的值, 一直替换到叶节点, 然后由叶节点执行删除
+    // 1. 非叶节点删除
+    //
     // 2. 叶节点删除
     // 如果叶节点够, 直接删
     // 如果不够, 找左右兄弟要
@@ -393,5 +409,10 @@ int main() {
     }
     int a = 78;
     pTreeNode position = find(root, &a);
-    printf("%d", position);
+
+    value_type find_value = 230;
+    pTreeNode pre = predecessor(root, &find_value);
+    printf("前驱节点: %d\n", pre);
+    pTreeNode suc = successor(root, &find_value);
+    printf("后继节点: %d\n", suc);
 }
