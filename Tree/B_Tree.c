@@ -306,14 +306,42 @@ pTreeNode successor(pTreeNode t, value_type *v) {
 int merge(){
 
 }
-// 删除值
-int delete(pTreeNode t, value_type *v){
-    // 1. 非叶节点删除
-    //
-    // 2. 叶节点删除
-    // 如果叶节点够, 直接删
-    // 如果不够, 找左右兄弟要
-    // 如果左右兄弟都不够, 尝试左右合并
+
+/** 删除值
+ * @return
+ * 0 需要合并
+ * 1 直接删除
+ */
+int delete(pTreeNode root, value_type *v){
+    if(root->is_leaf){
+        // 只有根节点
+        for (int i = 0; i < root->size; ++i) {
+            // 匹配到值, 删除这个值, 缩短数组, 不做其他处理
+            if(*v == root->values[i]){
+                for (int j = i; j < root->size; ++j) {
+                    root->values[j] = root->values[j + 1];
+                }
+                root->size -= 1;
+                break;
+            }
+        }
+    } else {
+        // 需要进行递归删除
+        pTreeNode cur = root;
+        pTreeNode child;
+        do{
+
+        }while(!cur->is_leaf);
+    }
+    if(!root->is_leaf){
+        // 1. 非叶节点删除
+        pTreeNode pre = predecessor(root, v);
+    }else{
+        // 2. 叶节点删除
+        // 如果叶节点够, 直接删
+        // 如果不够, 找左右兄弟要
+        // 如果左右兄弟都不够, 删除后返回0
+    }
 }
 
 /* 只能插入叶子节点
@@ -410,7 +438,7 @@ int main() {
     int a = 78;
     pTreeNode position = find(root, &a);
 
-    value_type find_value = 230;
+    value_type find_value = 40;
     pTreeNode pre = predecessor(root, &find_value);
     printf("前驱节点: %d\n", pre);
     pTreeNode suc = successor(root, &find_value);
