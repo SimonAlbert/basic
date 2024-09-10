@@ -31,6 +31,7 @@ typedef struct TreeNode {
     value_type* values;
     struct TreeNode** children;
     struct TreeNode* parent;
+    int parent_index;
     int is_leaf;
     int is_root;
 } *pTreeNode, TreeNode;
@@ -204,6 +205,7 @@ void print(pTreeNode t, int deep, int num){
         }
     }
 }
+// TODO 保留搜索路径
 pTreeNode find(pTreeNode t, value_type *v) {
     if(t->is_leaf){
         value_type tmp;
@@ -256,7 +258,7 @@ pTreeNode find_min(pTreeNode cur){
         return find_min(cur->children[0]);
     }
 }
-// 前驱节点, 比自己小的最大的
+// 前驱节点, 比自己小的最大的 TODO 保留搜索路径
 pTreeNode predecessor(pTreeNode t, value_type *v) {
     if(t->is_leaf){
         return t;
@@ -278,7 +280,7 @@ pTreeNode predecessor(pTreeNode t, value_type *v) {
     }
     return NULL;
 }
-// 后继节点, 比自己大的最小的
+// 后继节点, 比自己大的最小的 TODO 保留搜索路径
 pTreeNode successor(pTreeNode t, value_type *v) {
     if(t->is_leaf){
         return t;
@@ -307,13 +309,16 @@ int merge(){
 
 }
 
-/** 删除值
+/** 删除值 还是递归吧
  * @return
- * 0 需要合并
- * 1 直接删除
+ * 1 需要合并
+ * 0 直接删除
+ * 如果叶节点够, 直接删
+ * 如果不够, 找左右兄弟要
+ * 如果左右兄弟都不够, 删除后返回0
  */
 int delete(pTreeNode root, value_type *v){
-    if(root->is_leaf){
+    if(root->is_leaf && root->is_root){
         // 只有根节点
         for (int i = 0; i < root->size; ++i) {
             // 匹配到值, 删除这个值, 缩短数组, 不做其他处理
@@ -322,29 +327,50 @@ int delete(pTreeNode root, value_type *v){
                     root->values[j] = root->values[j + 1];
                 }
                 root->size -= 1;
-                break;
+                return 0;
             }
         }
-    } else {
+        printf("未找到元素\n");
+        return root->size < MIN_VALUE_COUNT;
+    } else if ( !root->is_leaf ) {
         // 需要进行递归删除
         pTreeNode cur = root;
-        pTreeNode child;
-        do{
+        // 执行删除操作的子节点
+        pTreeNode dist_child = NULL;
+        // 执行删除操作的子节点的下标
+        int dist_child_index = -1;
+        // 小于最小 扩展搜索最左
+        if(*v < cur->values[0]){
+            dist_child_index = 0;
+        } else if(*v > cur->values[cur->size - 1]){
+            // 大于最大 扩展搜索最右
+            dist_child_index = cur->size;
+        } else {
+            // 扫描定位
+            for (int i = 0; i < cur->size; ++i) {
+                if (cur->values[i] == *v) {
+                    // 匹配成功, 删除前驱节点(必然存在)最大值
+                    // TODO 如果不考虑效率, 可以换值后继续递归, 如果考虑效率, 可以单独实现搜索删除前驱节点的方法
+                    pTreeNode pre = find_max(cur->children[i]);
+                }
+                if (cur->values[i] < *v && *v < cur->values[i + 1]) {
+                    dist_child_index = i;
+                }
+            }
+        }
 
-        }while(!cur->is_leaf);
-    }
-    if(!root->is_leaf){
-        // 1. 非叶节点删除
-        pTreeNode pre = predecessor(root, v);
-    }else{
-        // 2. 叶节点删除
-        // 如果叶节点够, 直接删
-        // 如果不够, 找左右兄弟要
-        // 如果左右兄弟都不够, 删除后返回0
+        dist_child = cur->children[dist_child_index];
+        if(delete(dist_child, v)) {
+
+        }
+        return 0;
+    } else if ( root->is_leaf ) {
+
     }
 }
 
-/* 只能插入叶子节点
+/*
+ * 只能插入叶子节点
  * return 0: 成功 1: 超限
  */
 int insert(pTreeNode current_node, value_type *v) {
