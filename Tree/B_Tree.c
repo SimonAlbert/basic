@@ -50,9 +50,9 @@ void insert_tree(pTreeNode root, value_type *v);
 pTreeNode createNode(){
     pTreeNode pNode = (pTreeNode) malloc(sizeof(TreeNode));
     pNode->size = 0;
-    pNode->values = (value_type*) malloc(sizeof(value_type) * M);
+    pNode->values = (value_type*) malloc(sizeof(value_type) * (M + 1));
     // 指向子节点的指针数组, 阶数不会很大, 空间浪费小
-    pNode->children = (pTreeNode*) malloc(sizeof(pTreeNode) * M);
+    pNode->children = (pTreeNode*) malloc(sizeof(pTreeNode) * (M + 1));
     for (int i = 0; i < M; ++i) {
         //设置默认值
         pNode->values[i] = 0;
@@ -130,6 +130,16 @@ int node_directed_insert(pTreeNode *arr, int num, pTreeNode v, int dis_index) {
     return 0;
 }
 
+void value_direct_delete(value_type *arr, const int size, const int index){
+    for (int i = index; i < size; ++i) {
+        arr[i] = arr[i+1];
+    }
+}
+void node_direct_delete(pTreeNode *arr, const int size, const int index){
+    for (int i = index; i < size; ++i) {
+        arr[i] = arr[i+1];
+    }
+}
 /*
  * 第一种拆分方法, 不使用节点内部的parent指针
  * 由父节点进行操作, 对父节点的第i个子节点进行拆分
@@ -305,7 +315,9 @@ pTreeNode successor(pTreeNode t, value_type *v) {
 
 
 // 节点合并
-int merge(){
+int merge(pTreeNode parent, int index){
+    pTreeNode left = parent->children[index];
+    pTreeNode right = parent->children[index + 1];
 
 }
 
@@ -352,6 +364,9 @@ int delete(pTreeNode root, value_type *v){
                     // 匹配成功, 删除前驱节点(必然存在)最大值
                     // TODO 如果不考虑效率, 可以换值后继续递归, 如果考虑效率, 可以单独实现搜索删除前驱节点的方法
                     pTreeNode pre = find_max(cur->children[i]);
+                    cur->values[i] = pre->values[pre->size - 1];
+                    pre->values[pre->size - 1] = *v;
+                    dist_child_index = i;
                 }
                 if (cur->values[i] < *v && *v < cur->values[i + 1]) {
                     dist_child_index = i;
@@ -361,14 +376,86 @@ int delete(pTreeNode root, value_type *v){
 
         dist_child = cur->children[dist_child_index];
         if(delete(dist_child, v)) {
+            // 删除之后节点过小, 需要进行处理, 向邻居借值或者与邻居合并
+            if(dist_child_index == 0) {
+                if(cur->children[1]->size > MIN_VALUE_COUNT){
+                    // 借值
+                    pTreeNode to_node = cur->children[0];
+                    pTreeNode from_node = cur->children[1];
 
+                    to_node->values[to_node->size] = cur->values[0];
+                    to_node->size++;
+
+                    cur->values[0] = from_node->values[0];
+
+                    value_direct_delete(from_node->values, from_node->size, 0);
+                    from_node->size--;
+                } else {
+                    // 不可借值, 触发合并
+                    pTreeNode left = cur->children[0];
+                    pTreeNode right = cur->children[1];
+
+                    left->values[left->size] = cur->values[0];
+                    left->size++;
+
+                    for (int i = 0; i < right->size; ++i) {
+                        left->values[left->size + i] = right->values[i];
+                    }
+                }
+            } else if (dist_child_index == cur->size) {
+
+            } else {
+
+            }
         }
         return 0;
     } else if ( root->is_leaf ) {
-
+        int deleted = 0;
+        for (int i = 0; i < root->size; ++i) {
+            if(root->values[i] == *v) {
+                deleted = 1;
+            }
+            if(deleted){
+                root->values[i] = root->values[i + 1];
+            }
+        }
+        if(deleted){
+            root->size--;
+            return root->size < MIN_VALUE_COUNT;
+        }else{
+            printf("未搜索到目标值");
+            return 0;
+        }
     }
 }
-
+/**
+ * 针对末级节点的删除
+ * @return
+ */
+int delete_leaf(pTreeNode leaf, pTreeNode parent, pTreeNode left, pTreeNode right, int index, value_type *v){
+    int deleted = 0;
+    for (int i = 0; i < leaf->size; ++i) {
+        if(leaf->values[i] == *v) {
+            deleted = 1;
+        }
+        if(deleted){
+            leaf->values[i] = leaf->values[i + 1];
+        }
+    }
+    if(deleted){
+        leaf->size--;
+        if(leaf->size < MIN_VALUE_COUNT){
+            // 左邻居
+            // 右邻居
+            //
+        }else{
+            return 0;
+        }
+    }else{
+        printf("未搜索到目标值");
+        return 0;
+    }
+}
 /*
  * 只能插入叶子节点
  * return 0: 成功 1: 超限
