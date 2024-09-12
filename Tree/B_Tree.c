@@ -330,6 +330,7 @@ int merge(pTreeNode parent, int index){
  * 如果左右兄弟都不够, 删除后返回0
  */
 int delete(pTreeNode root, value_type *v){
+    printf("{%d}\n", root);
     if(root->is_leaf && root->is_root){
         // 只有根节点
         for (int i = 0; i < root->size; ++i) {
@@ -343,7 +344,6 @@ int delete(pTreeNode root, value_type *v){
             }
         }
         printf("未找到元素\n");
-        return root->size < MIN_VALUE_COUNT;
     } else if ( !root->is_leaf ) {
         // 需要进行递归删除
         pTreeNode cur = root;
@@ -359,6 +359,7 @@ int delete(pTreeNode root, value_type *v){
             dist_child_index = cur->size;
         } else {
             // 扫描定位
+            printf("扫描定位\n");
             for (int i = 0; i < cur->size; ++i) {
                 if (cur->values[i] == *v) {
                     // 匹配成功, 删除前驱节点(必然存在)最大值
@@ -369,46 +370,108 @@ int delete(pTreeNode root, value_type *v){
                     dist_child_index = i;
                 }
                 if (cur->values[i] < *v && *v < cur->values[i + 1]) {
-                    dist_child_index = i;
+                    dist_child_index = i + 1;
                 }
             }
         }
 
+        printf("dis_child_index: %d\n", dist_child_index);
         dist_child = cur->children[dist_child_index];
         if(delete(dist_child, v)) {
+            // 借值
+            pTreeNode left = NULL;
+            pTreeNode right = NULL;
+            // -1向左借 0合并 1向右借
+            int direct;
+            // 左节点下标
+            int left_index;
             // 删除之后节点过小, 需要进行处理, 向邻居借值或者与邻居合并
             if(dist_child_index == 0) {
+                // 优先借邻居节点的值
                 if(cur->children[1]->size > MIN_VALUE_COUNT){
-                    // 借值
-                    pTreeNode to_node = cur->children[0];
-                    pTreeNode from_node = cur->children[1];
-
-                    to_node->values[to_node->size] = cur->values[0];
-                    to_node->size++;
-
-                    cur->values[0] = from_node->values[0];
-
-                    value_direct_delete(from_node->values, from_node->size, 0);
-                    from_node->size--;
+                    // 右邻居借值
+                    direct = 1;
                 } else {
-                    // 不可借值, 触发合并
-                    pTreeNode left = cur->children[0];
-                    pTreeNode right = cur->children[1];
-
-                    left->values[left->size] = cur->values[0];
-                    left->size++;
-
-                    for (int i = 0; i < right->size; ++i) {
-                        left->values[left->size + i] = right->values[i];
-                    }
+                    // 与右邻居合并
+                    direct = 0;
                 }
+                left = cur->children[0];
+                right = cur->children[1];
+                left_index = 0;
             } else if (dist_child_index == cur->size) {
-
+                if(cur->children[cur->size - 1]->size > MIN_VALUE_COUNT){
+                    // 左邻居借值
+                    direct = -1;
+                } else {
+                    // 与左邻居合并
+                    direct = 0;
+                }
+                left = cur->children[cur->size - 1];
+                right = cur->children[cur->size];
+                left_index = cur->size - 1;
             } else {
+                // 优先借邻居节点的值
+                if(cur->children[dist_child_index - 1]->size > MIN_VALUE_COUNT){
+                    // 左邻居
+                    direct = -1;
+                    left = cur->children[dist_child_index - 1];
+                    right = cur->children[dist_child_index];
+                    left_index = dist_child_index - 1;
+                } else if (cur->children[dist_child_index + 1]->size > MIN_VALUE_COUNT) {
+                    // 右邻居
+                    direct = 1;
+                    left = cur->children[dist_child_index];
+                    right = cur->children[dist_child_index + 1];
+                    left_index = dist_child_index;
+                } else {
+                    // 与左邻居合并
+                    direct = 0;
+                    left = cur->children[dist_child_index - 1];
+                    right = cur->children[dist_child_index];
+                    left_index = dist_child_index - 1;
+                }
+            }
+            if(direct == 1){
+                // 右借值
+                left->values[left->size] = cur->values[dist_child_index];
+                left->children[left->size + 1] = right->children[0];
+                left->size++;
 
+                cur->values[dist_child_index] = right->values[0];
+
+                value_direct_delete(right->values, right->size, 0);
+                node_direct_delete(right->children, right->size + 1, 0);
+                right->size--;
+            } else if (direct == -1) {
+                // 左借值
+                value_directed_insert(right->values, right->size, cur->values + (dist_child_index - 1), 0);
+                node_directed_insert(right->children, right->size + 1, left->children[left->size], 0);
+                right->size++;
+
+                cur->values[dist_child_index - 1] = left->values[left->size - 1];
+
+                value_direct_delete(left->values, left->size, left->size - 1);
+                node_direct_delete(left->children, left->size + 1, left->size);
+                left->size--;
+            } else {
+                // 不可借值, 左右合并
+                // 左子节点作为合并后的子节点
+                left->values[left->size] = cur->values[left_index];
+                left->size++;
+                for (int i = 0; i < right->size; ++i) {
+                    left->values[left->size + i] = right->values[i];
+                }
+                for (int i = 0; i < right->size + 1; ++i) {
+                    left->children[left->size + i] = right->children[i];
+                }
+                left->size += right->size;
+                // 父节点操作
+                value_direct_delete(cur->values, cur->size, left_index);
+                node_direct_delete(cur->children, cur->size + 1, left_index + 1);
+                cur->size--;
+                cur->children[0] = left;
             }
         }
-        return 0;
     } else if ( root->is_leaf ) {
         int deleted = 0;
         for (int i = 0; i < root->size; ++i) {
@@ -421,41 +484,14 @@ int delete(pTreeNode root, value_type *v){
         }
         if(deleted){
             root->size--;
-            return root->size < MIN_VALUE_COUNT;
         }else{
-            printf("未搜索到目标值");
+            printf("未搜索到目标值\n");
             return 0;
         }
     }
+    return root->size < MIN_VALUE_COUNT;
 }
-/**
- * 针对末级节点的删除
- * @return
- */
-int delete_leaf(pTreeNode leaf, pTreeNode parent, pTreeNode left, pTreeNode right, int index, value_type *v){
-    int deleted = 0;
-    for (int i = 0; i < leaf->size; ++i) {
-        if(leaf->values[i] == *v) {
-            deleted = 1;
-        }
-        if(deleted){
-            leaf->values[i] = leaf->values[i + 1];
-        }
-    }
-    if(deleted){
-        leaf->size--;
-        if(leaf->size < MIN_VALUE_COUNT){
-            // 左邻居
-            // 右邻居
-            //
-        }else{
-            return 0;
-        }
-    }else{
-        printf("未搜索到目标值");
-        return 0;
-    }
-}
+
 /*
  * 只能插入叶子节点
  * return 0: 成功 1: 超限
@@ -548,12 +584,10 @@ int main() {
         insert_tree(root, values + i);
         print(root, 0, 0);
     }
-    int a = 78;
-    pTreeNode position = find(root, &a);
-
-    value_type find_value = 40;
-    pTreeNode pre = predecessor(root, &find_value);
-    printf("前驱节点: %d\n", pre);
-    pTreeNode suc = successor(root, &find_value);
-    printf("后继节点: %d\n", suc);
+    value_type delete_values[] = { 88,80, 100};
+    for (int i = 0; i < sizeof(delete_values) / sizeof(delete_values[0]); ++i) {
+        printf("删除: %d\n", delete_values[i]);
+        delete(root, delete_values + i);
+        print(root, 0, 0);
+    }
 }
