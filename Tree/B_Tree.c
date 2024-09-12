@@ -257,7 +257,7 @@ pTreeNode find_max(pTreeNode cur){
     if(cur->is_leaf){
         return cur;
     } else {
-        return find_max(cur->children[cur->size - 1]);
+        return find_max(cur->children[cur->size]);
     }
 }
 // 传入节点下属最小值所在节点
@@ -365,11 +365,11 @@ int delete(pTreeNode root, value_type *v){
                     // 匹配成功, 删除前驱节点(必然存在)最大值
                     // TODO 如果不考虑效率, 可以换值后继续递归, 如果考虑效率, 可以单独实现搜索删除前驱节点的方法
                     pTreeNode pre = find_max(cur->children[i]);
+                    printf("前驱节点: {%d}\n", pre);
                     cur->values[i] = pre->values[pre->size - 1];
                     pre->values[pre->size - 1] = *v;
                     dist_child_index = i;
-                }
-                if (cur->values[i] < *v && *v < cur->values[i + 1]) {
+                } else if (cur->values[i] < *v && *v < cur->values[i + 1]) {
                     dist_child_index = i + 1;
                 }
             }
@@ -461,7 +461,7 @@ int delete(pTreeNode root, value_type *v){
                 for (int i = 0; i < right->size; ++i) {
                     left->values[left->size + i] = right->values[i];
                 }
-                for (int i = 0; i < right->size + 1; ++i) {
+                for (int i = 0; i <= right->size; ++i) {
                     left->children[left->size + i] = right->children[i];
                 }
                 left->size += right->size;
@@ -469,7 +469,12 @@ int delete(pTreeNode root, value_type *v){
                 value_direct_delete(cur->values, cur->size, left_index);
                 node_direct_delete(cur->children, cur->size + 1, left_index + 1);
                 cur->size--;
-                cur->children[0] = left;
+                if(cur->size){
+                    cur->children[left_index] = left;
+                } else {
+                    printf("发生了节点复制\n");
+                    *cur = *left;
+                }
             }
         }
     } else if ( root->is_leaf ) {
@@ -584,7 +589,15 @@ int main() {
         insert_tree(root, values + i);
         print(root, 0, 0);
     }
-    value_type delete_values[] = { 88,80, 100};
+//    value_type delete_values[] = { 88,80, 100};
+    value_type delete_values[] = {
+        88, 30, 35, 40, 60,
+        59, 110, 120, 130, 140,
+        150, 160, 170, 180, 190, 250,
+        200, 210, 220, 230, 240,
+        4, 7, 9, 5, 11, 3, 
+        2, 10, 100, 78, 66, 80
+    };
     for (int i = 0; i < sizeof(delete_values) / sizeof(delete_values[0]); ++i) {
         printf("删除: %d\n", delete_values[i]);
         delete(root, delete_values + i);
