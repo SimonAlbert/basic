@@ -52,27 +52,27 @@ int end(node_ptr t) {
 int balanceFactor(node_ptr t){
     return abs(height(lc(t)) - height(rc(t)));
 }
-// get situtation recursion
-void _situtation(node_ptr t, int deepth, int* lr_log){
+// get situation recursion
+void _situation(node_ptr t, int deepth, int* lr_log){
     if(height(lc(t)) > height(rc(t))){
         if(deepth < 2){
-            _situtation(lc(t), deepth + 1, lr_log);
+            _situation(lc(t), deepth + 1, lr_log);
         }
         *lr_log *= 2;
     }else if(height(lc(t)) < height(rc(t))){
         if(deepth < 2){
-            _situtation(rc(t), deepth + 1, lr_log);
+            _situation(rc(t), deepth + 1, lr_log);
         }
         *lr_log = *lr_log * 2 + 1;
     }
 }
-// get situtation
-int situtation(node_ptr t){
+// get situation
+int situation(node_ptr t){
     if(height(t) < 2 || balanceFactor(t) < 1){
         return -1;
     }
     int deepth = 0,lr_log=0;
-    _situtation(t, deepth, &lr_log);
+    _situation(t, deepth, &lr_log);
     return lr_log;
 }
 
@@ -319,7 +319,7 @@ node_ptr delete_val(node_ptr t, T *v) {
     } else {
         set_rc(t, delete_val(rc(t), v));
     }
-    int flag = situtation(t);
+    int flag = situation(t);
     printf("%d situation:%d\n", t->val, flag);
     print(t);
     if(balanceFactor(t) > 1){
@@ -342,14 +342,16 @@ node_ptr delete_val(node_ptr t, T *v) {
 }
 int main()
 {
-//    node_ptr root = NULL;
-    T in = 1;
     int lr_log=0b00;
-//    int x[16] = {5,3,6,7,4,2,1,-5,-3, -1, -7,-19, -99, -110, -111, -105};
-    int x[6] = {5, 3, 7, 4, 2, 6};
-    for (int i = 0; i < 6; ++i) {
-        root = insert(root, x+i, &lr_log);
+    int num = 10000;
+    int* values = malloc(sizeof(int) * num);
+    for (int i = 0; i < num; ++i) {
+        int random_number = rand();
+        values[i] = random_number;
+        root = insert(root, values+i, &lr_log);
     }
+    print(root);
+
 //    while(in != '0'){
 //        scanf("%d", &in);
 ////        system("cls");
@@ -361,14 +363,14 @@ int main()
 //        printf("after insert\n");
 //        print(root);
 //    }
-    while(in != '0'){
-        scanf("%d", &in);
-        if (!in) { break; }
-        printf("before delete\n");
-        print(root);
-        root = delete_val(root, &in);
-        printf("after delete\n");
-        print(root);
-    }
+//    while(in != '0'){
+//        scanf("%d", &in);
+//        if (!in) { break; }
+//        printf("before delete\n");
+//        print(root);
+//        root = delete_val(root, &in);
+//        printf("after delete\n");
+//        print(root);
+//    }
     return 0;
 }
