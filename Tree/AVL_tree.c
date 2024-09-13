@@ -80,7 +80,7 @@ void print_node(node_ptr t) {
     printf("{%d},", t->val);
 }
 
-// æ ¹å·¦å³
+// ¸ù×óÓÒ
 void pre_order_print(node_ptr t) {
     if (end(t)) return;
     print_node(t);
@@ -88,7 +88,7 @@ void pre_order_print(node_ptr t) {
     pre_order_print(rc(t));
 }
 
-// å·¦æ ¹å³
+// ×ó¸ùÓÒ
 void in_order_print(node_ptr t) {
     if (end(t)) return;
     in_order_print(lc(t));
@@ -96,7 +96,7 @@ void in_order_print(node_ptr t) {
     in_order_print(rc(t));
 }
 
-// å·¦å³æ ¹
+// ×óÓÒ¸ù
 void post_order_print(node_ptr t) {
     if (end(t)) return;
     post_order_print(lc(t));
@@ -115,7 +115,7 @@ node_ptr find_max(node_ptr t) {
     return find_max(rc(t));
 }
 node_ptr delete_max(node_ptr t){
-    if(!rc(t)) {// åˆ°è¾¾è¦åˆ é™¤çš„èŠ‚ç‚¹
+    if(!rc(t)) {// µ½´ïÒªÉ¾³ıµÄ½Úµã
         node_ptr  l = lc(t);
         free(t);
         return l;
@@ -124,7 +124,7 @@ node_ptr delete_max(node_ptr t){
     return t;
 }
 node_ptr delete_min(node_ptr t){
-    if(!lc(t)) {// åˆ°è¾¾è¦åˆ é™¤çš„èŠ‚ç‚¹
+    if(!lc(t)) {// µ½´ïÒªÉ¾³ıµÄ½Úµã
         if(rc(t)){
             return rc(t);
         }
@@ -143,23 +143,25 @@ node_ptr find_val(node_ptr t, T *v) {
         return find_val(rc(t), v);
     }
 }
-
+void print_spaces(int n){
+    for (int i = 0; i < n; ++i) {
+        printf("    ");
+    }
+}
 void linkedlist_format_output(node_ptr t, int deepth){
     if (end(t)) {
-        for (int i = 0; i < deepth; ++i) {
-            printf("       ");
-        }
         printf("N\n");
         return;
     }
-    linkedlist_format_output(rc(t), deepth+1);
+    printf("%d\n", t->val);
 
-    for (int i = 0; i < deepth; ++i) {
-        printf("       ");
-    }
-    printf("%d:%d\n", t->val, height(t));
-
+    print_spaces(deepth);
+    printf("×ó: ");
     linkedlist_format_output(lc(t), deepth+1);
+
+    print_spaces(deepth);
+    printf("ÓÒ: ");
+    linkedlist_format_output(rc(t), deepth+1);
 }
 
 void print(node_ptr root_){
@@ -168,24 +170,24 @@ void print(node_ptr root_){
     printf("=============================\n");
 }
 
-// å·¦å³ç’‡ åœ¨é“¾è¡¨çš„å®ç°ä¸­éš¾ä»¥é¿å…å‘ç”ŸèŠ‚ç‚¹å¤åˆ¶
-/* èŠ‚ç‚¹Aå³æ—‹
- * éœ€è¦æ“ä½œä¸‰ä¸ªèŠ‚ç‚¹: A, Açš„å·¦å­æ ‘B, Bçš„å³å­æ ‘E
+// ×óÓÒè¯ ÔÚÁ´±íµÄÊµÏÖÖĞÄÑÒÔ±ÜÃâ·¢Éú½Úµã¸´ÖÆ
+/* ½ÚµãAÓÒĞı
+ * ĞèÒª²Ù×÷Èı¸ö½Úµã: A, AµÄ×ó×ÓÊ÷B, BµÄÓÒ×ÓÊ÷E
  *                R                    R
  *                |                    |
- *                A                    B
- *              /  \                  / \
- *             B    C     ===>       D   A
- *            / \  / \                  / \
- *           D  E F   G                E   C
+ *               [A]                   B
+ *              /   \                 / \
+ *            [B]    C     ===>      D   A
+ *            / \   / \                 / \
+ *           D (E) F   G               E   C
  *                                        / \
  *                                       F   G
  */
 void rotate_right(node_ptr newB_oldA){
-    printf("before right rotate: %d\n", newB_oldA->val);
-    print(root);
+//    printf("before right rotate: %d\n", newB_oldA->val);
+//    print(root);
 //    print(newB_oldA);
-    // ä¸ä¿®æ”¹æŒ‡é’ˆ, ä¿®æ”¹æŒ‡é’ˆæŒ‡å‘çš„å€¼
+    // ²»ĞŞ¸ÄÖ¸Õë, ĞŞ¸ÄÖ¸ÕëÖ¸ÏòµÄÖµ
     node_ptr oldB = lc(newB_oldA);
     node_ptr E = rc(oldB);
     node_ptr newA = (node_ptr) malloc(sizeof(node));
@@ -193,26 +195,26 @@ void rotate_right(node_ptr newB_oldA){
     *newB_oldA = *oldB;
     set_lc(newA, E);
     set_rc(newB_oldA, newA);
-    printf("after right rotate\n");
+//    printf("after right rotate\n");
 //    print(newB_oldA);
-    print(root);
+//    print(root);
 }
 
-/* èŠ‚ç‚¹Aå·¦æ—‹
- * éœ€è¦æ“ä½œä¸‰ä¸ªèŠ‚ç‚¹: A, Açš„å³å­æ ‘C, Cçš„å·¦å­æ ‘F
- *               R                    R
- *               |                    |
- *               A                    C
- *             /   \                /  \
- *            B     C     ===>     A    G
- *          /  \  /  \           /  \
- *         D   E F    G         B    F
+/* ½ÚµãA×óĞı
+ * ĞèÒª²Ù×÷Èı¸ö½Úµã: A, AµÄÓÒ×ÓÊ÷C, CµÄ×ó×ÓÊ÷F
+ *              R                     R
+ *              |                     |
+ *             [A]                    C
+ *            /   \                 /  \
+ *           B     [C]   ===>      A    G
+ *          / \   /  \           /  \
+ *         D   E (F)  G        B    F
  *                            /  \
  *                           D    E
  */
 void rotate_left(node_ptr newC_oldA){
-    printf("before left rotate: %d\n", newC_oldA->val);
-    print(root);
+//    printf("before left rotate: %d\n", newC_oldA->val);
+//    print(root);
 //    print(newC_oldA);
     node_ptr oldC = rc(newC_oldA);
     node_ptr F = lc(oldC);
@@ -221,17 +223,17 @@ void rotate_left(node_ptr newC_oldA){
     *newC_oldA = *oldC;
     set_rc(newA, F);
     set_lc(newC_oldA, newA);
-    printf("after left rotate\n");
+//    printf("after left rotate\n");
 //    print(newC_oldA);
-    print(root);
+//    print(root);
 }
 
-// ä¸å¹³è¡¡æ—¶è¿›è¡Œè°ƒæ•´
+// ²»Æ½ºâÊ±½øĞĞµ÷Õû
 void balance(node_ptr t){
 
 }
 
-// ç¬¬ä¸€ç‰ˆæ’å…¥, ç”¨äº†ä½è¿ç®—, æŒºæœ‰æ„æ€çš„,ä¸åˆ äº†
+// µÚÒ»°æ²åÈë, ÓÃÁËÎ»ÔËËã, Í¦ÓĞÒâË¼µÄ,²»É¾ÁË
 node_ptr insert(node_ptr t, T *v, int* lr_log) {
     if (end(t)) {
         node_ptr p = (node_ptr)malloc(sizeof(node));
@@ -247,32 +249,33 @@ node_ptr insert(node_ptr t, T *v, int* lr_log) {
         return t;
     } else if (*v < t->val) {
         set_lc(t, insert(lc(t), v, lr_log));
-        *lr_log = *lr_log * 2;
+        *lr_log <<= 1; // Ä©Î»²¹0
     } else if (*v > t->val) {
         set_rc(t, insert(rc(t), v, lr_log));
-        *lr_log = *lr_log * 2 + 1;
+        *lr_log <<= 1;
+        *lr_log |= 1; // Ä©Î»²¹1
     }
     /*
      *                A
      *            0/    \1
      *           B       C
      *        0/  \1   0/  \1
-     * flag: 00   10   01  11
+     * flag: 00   10   01  11 (ÓÉÏÂÏòÉÏ)
      * situ: LL   LR   RL  RR
      */
-    int flag = 0b11&*lr_log; // 00:LL 10:LR 01:RL 11:RR
-    if(balanceFactor(t) > 1){
-        // åå·¦
-        if(flag == 0b00){
+    int flag = 0b11&*lr_log; // 00:LL 10:LR 01:RL 11:RR Ö»Æ¥Åä×îºóÁ½Î»¾ÍĞĞ, ×îºóÁ½Î»ÊÇÀë×Ô¼º×î½üµÄÁ½²ã²Ù×÷
+    if(balanceFactor(t) > 1){ // ¸ß¶È²î´óÓÚ1, ²»Æ½ºâ
+        // Æ«×ó
+        if(flag == 0b00){ // LL
             rotate_right(t);
-        }else if (flag == 0b10){
+        }else if (flag == 0b10){ // LR
             rotate_left(lc(t));
             rotate_right(t);
         }
-        // åå³
-        else if(flag == 0b11){
+        // Æ«ÓÒ
+        else if(flag == 0b11){ // RR
             rotate_left(t);
-        }else if (flag == 0b01){
+        }else if (flag == 0b01){ // RL
             rotate_right(rc(t));
             rotate_left(t);
         }
@@ -280,7 +283,7 @@ node_ptr insert(node_ptr t, T *v, int* lr_log) {
     return t;
 }
 
-// ä½¿ç”¨é“¾è¡¨å®ç°
+// Ê¹ÓÃÁ´±íÊµÏÖ
 node_ptr delete_val(node_ptr t, T *v) {
     if (end(t)) return NULL;
     if (*v == t->val) {
@@ -323,14 +326,14 @@ node_ptr delete_val(node_ptr t, T *v) {
     printf("%d situation:%d\n", t->val, flag);
     print(t);
     if(balanceFactor(t) > 1){
-        // åå·¦
+        // Æ«×ó
         if(flag == 0b00){
             rotate_right(t);
         }else if (flag == 0b10){
             rotate_left(lc(t));
             rotate_right(t);
         }
-            // åå³
+            // Æ«ÓÒ
         else if(flag == 0b11){
             rotate_left(t);
         }else if (flag == 0b01){
