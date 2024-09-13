@@ -17,6 +17,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 
 // 关键字类型
@@ -153,7 +154,7 @@ void split(pTreeNode parent_node, int index)
     // 非叶子节点
     // 取待分裂节点
     pTreeNode split_node = parent_node->children[index];
-    printf("分裂节点:%d\n", split_node);
+//    printf("分裂节点:%d\n", split_node);
     // 新节点size
     child1->size = MIN_VALUE_COUNT;
     child2->size = M - (MIN_VALUE_COUNT + 1);
@@ -330,7 +331,7 @@ int merge(pTreeNode parent, int index){
  * 如果左右兄弟都不够, 删除后返回0
  */
 int delete(pTreeNode root, value_type *v){
-    printf("{%d}\n", root);
+//    printf("{%d}\n", root);
     if(root->is_leaf && root->is_root){
         // 只有根节点
         for (int i = 0; i < root->size; ++i) {
@@ -359,13 +360,13 @@ int delete(pTreeNode root, value_type *v){
             dist_child_index = cur->size;
         } else {
             // 扫描定位
-            printf("扫描定位\n");
+//            printf("扫描定位\n");
             for (int i = 0; i < cur->size; ++i) {
                 if (cur->values[i] == *v) {
                     // 匹配成功, 删除前驱节点(必然存在)最大值
                     // TODO 如果不考虑效率, 可以换值后继续递归, 如果考虑效率, 可以单独实现搜索删除前驱节点的方法
                     pTreeNode pre = find_max(cur->children[i]);
-                    printf("前驱节点: {%d}\n", pre);
+//                    printf("前驱节点: {%d}\n", pre);
                     cur->values[i] = pre->values[pre->size - 1];
                     pre->values[pre->size - 1] = *v;
                     dist_child_index = i;
@@ -375,7 +376,7 @@ int delete(pTreeNode root, value_type *v){
             }
         }
 
-        printf("dis_child_index: %d\n", dist_child_index);
+//        printf("dis_child_index: %d\n", dist_child_index);
         dist_child = cur->children[dist_child_index];
         if(delete(dist_child, v)) {
             // 借值
@@ -472,7 +473,7 @@ int delete(pTreeNode root, value_type *v){
                 if(cur->size){
                     cur->children[left_index] = left;
                 } else {
-                    printf("发生了节点复制\n");
+//                    printf("发生了节点复制\n");
                     *cur = *left;
                 }
             }
@@ -490,7 +491,7 @@ int delete(pTreeNode root, value_type *v){
         if(deleted){
             root->size--;
         }else{
-            printf("未搜索到目标值\n");
+//            printf("未搜索到目标值\n");
             return 0;
         }
     }
@@ -502,7 +503,7 @@ int delete(pTreeNode root, value_type *v){
  * return 0: 成功 1: 超限
  */
 int insert(pTreeNode current_node, value_type *v) {
-    printf("%d插入节点%d\n", *v, current_node);
+//    printf("%d插入节点%d\n", *v, current_node);
     if (current_node->is_leaf) { // 叶节点
         value_array_insert(current_node->values, current_node->size, v);
         current_node->size++;
@@ -537,7 +538,7 @@ void insert_tree(pTreeNode root, value_type *v) {
         leaf = 0;
     }
     if(root->size > MAX_VALUE_COUNT){
-        printf("分裂根节点\n");
+//        printf("分裂根节点\n");
         // 先创建两个新节点
         pTreeNode child1 = createNode();
         pTreeNode child2 = createNode();
@@ -577,30 +578,64 @@ void insert_tree(pTreeNode root, value_type *v) {
         root->children[1] = child2;
     }
 }
-
+void shuffleArray(int arr[], int n) {
+    int i, j, temp;
+    srand(time(0)); // 初始化随机种子，使得每次运行时随机性不同
+    for (i = 0; i < n - 1; i++) {
+        j = i + rand() / (RAND_MAX / (n - i) + 1); // 生成[i, n)范围内的随机索引
+        temp = arr[i]; // 交换arr[i]和arr[j]
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+}
 int main() {
-    value_type values[] = { 4, 7, 9, 5, 11, 3, 2, 10, 100, 78, 66, 80,
-                            88, 30, 35, 40, 60, 59, 110, 120, 130, 140,
-                            150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250};
-//    value_type values[] = { 1,2,3,4,5,6,7,8};
     pTreeNode root = createNode();
     root->is_root = 1;
-    for (int i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
+    int num = 100000000;
+    value_type* values = malloc(sizeof(value_type) * num);
+    srand(time(NULL));
+    int begin = clock();
+    printf("开始：%d\n", begin);
+    for (int i = 0; i < num; ++i) {
+        value_type random_number = rand();
+        values[i] = random_number;
         insert_tree(root, values + i);
-        print(root, 0, 0);
     }
-//    value_type delete_values[] = { 88,80, 100};
-    value_type delete_values[] = {
-        88, 30, 35, 40, 60,
-        59, 110, 120, 130, 140,
-        150, 160, 170, 180, 190, 250,
-        200, 210, 220, 230, 240,
-        4, 7, 9, 5, 11, 3, 
-        2, 10, 100, 78, 66, 80
-    };
-    for (int i = 0; i < sizeof(delete_values) / sizeof(delete_values[0]); ++i) {
-        printf("删除: %d\n", delete_values[i]);
-        delete(root, delete_values + i);
-        print(root, 0, 0);
-    }
+    int end = clock();
+    printf("结束：%d\n", end);
+    printf("%d条数据插入耗时：%dms\n", num, end-begin);
+    print(root, 0, 0);
+//    shuffleArray(values, num);
+//    begin = clock();
+//    for (int i = 0; i < num / 2; ++i) {
+//        delete(root, values + i);
+//    }
+//    end = clock();
+//    printf("%d条数据删除耗时：%dms\n", num / 2, end-begin);
+//    print(root, 0, 0);
+//    value_type values[] = {
+//            4, 7, 9, 5, 11, 3,
+//            200, 210, 220, 230, 240,
+//            88, 30, 35, 40, 60,
+//            59, 110, 120, 130, 140,
+//            150, 160, 170, 180, 190, 250,
+//            2, 10, 100, 78, 66, 80
+//    };
+//    for (int i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
+//        insert_tree(root, values + i);
+//        print(root, 0, 0);
+//    }
+//    value_type delete_values[] = {
+//        88, 30, 35, 40, 60,
+//        59, 110, 120, 130, 140,
+//        150, 160, 170, 180, 190, 250,
+//        200, 210, 220, 230, 240,
+//        4, 7, 9, 5, 11, 3,
+//        2, 10, 100, 78, 66, 80
+//    };
+//    for (int i = 0; i < sizeof(delete_values) / sizeof(delete_values[0]); ++i) {
+//        printf("删除: %d\n", delete_values[i]);
+//        delete(root, delete_values + i);
+//        print(root, 0, 0);
+//    }
 }
