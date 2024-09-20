@@ -55,7 +55,8 @@ pTreeNode createNotLeafNode();
 // 创建B+树
 pBPTree createBPTree();
 // 1.插入数据
-int insert(pBPTree pTree, pDataNode pData);
+int insertTree(pBPTree pTree, pDataNode pData);
+int insert(pTreeNode node, pDataNode pData);
 // --节点已满, 分裂
 void split(pTreeNode parent, int index);
 // 2.删除数据
@@ -93,14 +94,29 @@ pTreeNode createNotLeafNode() {
 pBPTree createBPTree() {
     pBPTree pTree = (pBPTree) malloc(sizeof(BPTree));
     pTreeNode pNode = createLeafNode();
+    pNode->is_root = 1;
     pTree->root = pNode;
     pTree->head = pNode;
     return pTree;
 }
-int insert(pBPTree pTree, pDataNode pData) {
-
+int insertTree(pBPTree pTree, pDataNode pData) {
+    pTreeNode root = pTree->root;
+    
 }
+int insert(pTreeNode node, pDataNode pData) {
+    if(node->is_leaf) {
 
+    } else {
+        // 定位
+        for (int i = 0; i < node->size; ++i) {
+
+        }
+        // 递归扩展
+
+        // 拆分
+    }
+    return node->size >= M;
+}
 int main(){
 
     return 0;
